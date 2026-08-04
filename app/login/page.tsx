@@ -1,31 +1,32 @@
 'use client';
 
 import { FormEvent, Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Mail } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { LogIn } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
 function LoginForm() {
+  const router = useRouter();
   const params = useSearchParams();
   const notAuthorized = params.get('error') === 'not-authorized';
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [password, setPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [error, setError] = useState('');
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus('sending');
     setError('');
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(params.get('next') || '/admin')}` },
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setStatus('error');
       setError(error.message);
       return;
     }
-    setStatus('sent');
+    router.push(params.get('next') || '/admin');
+    router.refresh();
   }
 
   return (
@@ -34,21 +35,24 @@ function LoginForm() {
         <h2 className="display">Admin sign in</h2>
       </div>
       {notAuthorized && <p className="form-error">That account doesn&apos;t have admin access.</p>}
-      {status === 'sent' ? (
-        <p className="admin-helper">Check <b>{email}</b> for a sign-in link. It expires shortly, so use it soon after it arrives.</p>
-      ) : (
-        <form onSubmit={submit}>
-          <div className="field">
-            <label htmlFor="email">Email</label>
-            <input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
-          </div>
-          {error && <p className="form-error">{error}</p>}
-          <button className="button dark" disabled={status === 'sending'}>
-            <Mail size={16} />
-            {status === 'sending' ? 'Sending…' : 'Send magic link'}
-          </button>
-        </form>
-      )}
+      <form onSubmit={submit}>
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+        </div>
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+        </div>
+        {error && <p className="form-error">{error}</p>}
+        <button className="button dark" disabled={status === 'sending'}>
+          <LogIn size={16} />
+          {status === 'sending' ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+      <p className="admin-helper" style={{ marginTop: 16, marginBottom: 0 }}>
+        <Link href="/forgot-password" className="text-link">Forgot your password?</Link>
+      </p>
     </div>
   );
 }
