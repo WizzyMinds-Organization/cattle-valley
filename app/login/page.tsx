@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { PasswordField } from '@/components/password-field';
 
 function LoginForm() {
   const router = useRouter();
@@ -40,10 +41,7 @@ function LoginForm() {
           <label htmlFor="email">Email</label>
           <input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
-        </div>
+        <PasswordField id="password" label="Password" value={password} onChange={setPassword} placeholder="••••••••" />
         {error && <p className="form-error">{error}</p>}
         <button className="button dark" disabled={status === 'sending'}>
           <LogIn size={16} />

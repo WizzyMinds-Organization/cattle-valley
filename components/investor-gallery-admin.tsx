@@ -1,0 +1,144 @@
+'use client';
+
+import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { Settings as SettingsIcon, Trash2, UploadCloud, X } from 'lucide-react';
+import { InvestorCategory, InvestorImage, deleteInvestorImage, fetchInvestorCategories, fetchInvestorImages, formatAuctionDate, saveInvestorImage, uploadFile } from '@/lib/cms';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { InvestorCategoryModal } from '@/components/investor-category-modal';
+
+export function InvestorGalleryAdmin() {
+  const [categories, setCategories] = useState<InvestorCategory[]>([]);
+  const [images, setImages] = useState<InvestorImage[]>([]);
+  const [ready, setReady] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState('');
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<InvestorImage | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadCategory, setUploadCategory] = useState('');
+  const [uploadDate, setUploadDate] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => {
+    Promise.all([fetchInvestorCategories(), fetchInvestorImages()])
+      .then(([cats, imgs]) => { setCategories(cats); setImages(imgs); setReady(true); })
+      .catch(err => { setError(err instanceof Error ? err.message : 'Could not reach Supabase.'); setReady(true); });
+  }, []);
+
+  function addFiles(list: FileList | File[]) {
+    const incoming = Array.from(list).filter(f => f.type.startsWith('image/'));
+    setFiles(prev => [...prev, ...incoming]);
+  }
+  function pickFiles(e: ChangeEvent<HTMLInputElement>) { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }
+  function removeFile(index: number) { setFiles(prev => prev.filter((_, i) => i !== index)); }
+  function onDrop(e: DragEvent<HTMLDivElement>) { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) addFiles(e.dataTransfer.files); }
+
+  async function submitBatch(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!uploadCategory || !uploadDate || files.length === 0) { setError('Choose a category, a date, and at least one photo.'); return; }
+    setUploading(true); setError(''); setNotice('');
+    try {
+      const saved: InvestorImage[] = [];
+      for (let i = 0; i < files.length; i++) {
+        setProgress(`Uploading ${i + 1} of ${files.length}…`);
+        const file = files[i];
+        const uploaded = await uploadFile(file);
+        const item = await saveInvestorImage({ title: file.name, category: uploadCategory, takenOn: uploadDate, image: uploaded.url }, true);
+        saved.push(item);
+      }
+      setImages(prev => [...saved, ...prev]);
+      setNotice(`Uploaded ${saved.length} photo${saved.length === 1 ? '' : 's'}.`);
+      setFiles([]);
+      setUploadDate('');
+      e.currentTarget.reset();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to upload photos.'); }
+    finally { setUploading(false); setProgress(''); }
+  }
+
+  async function remove(id: string) {
+    try { await deleteInvestorImage(id); setImages(prev => prev.filter(i => i.id !== id)); setNotice('Photo removed.'); }
+    catch (err) { setNotice(err instanceof Error ? err.message : 'Failed to delete.'); }
+  }
+
+  const groups = useMemo(() => {
+    return categories.map(cat => {
+      const catImages = images.filter(i => i.category === cat.slug);
+      const byDate = new Map<string, InvestorImage[]>();
+      for (const image of catImages) {
+        const list = byDate.get(image.takenOn) || [];
+        list.push(image);
+        byDate.set(image.takenOn, list);
+      }
+      const dates = Array.from(byDate.keys()).sort().reverse().map(date => ({ date, images: byDate.get(date)! }));
+      return { category: cat, count: catImages.length, dates };
+    });
+  }, [categories, images]);
+
+  return <>
+    <div className="admin-top"><div><h1 className="display">Investor gallery</h1><p className="admin-helper" style={{ margin: '6px 0 0' }}>{images.length} photo{images.length === 1 ? '' : 's'} across {categories.length} categor{categories.length === 1 ? 'y' : 'ies'} — only reachable from the footer link.</p></div><button className="button light" onClick={() => setShowCategoryModal(true)}><SettingsIcon size={16} />Manage categories</button></div>
+    {notice && <div className="admin-notice">{notice}<button onClick={() => setNotice('')} aria-label="Close"><X size={14} /></button></div>}
+    {!ready && <p className="admin-helper">Loading…</p>}
+    {ready && <>
+      <p className="admin-helper">Bulk-upload a batch of photos for one category and one date — this is what the team shares with investors as a filtered link.</p>
+      <form className="card editor" onSubmit={submitBatch}>
+        <div className="upload-fields-row">
+          <div className="field">
+            <label htmlFor="category">Category</label>
+            <select id="category" name="category" required value={uploadCategory} onChange={e => setUploadCategory(e.target.value)}>
+              <option value="" disabled>Select a category…</option>
+              {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
+            </select>
+            {categories.length === 0 && <small>No categories yet — use &quot;Manage categories&quot; above to add one first.</small>}
+          </div>
+          <div className="field"><label htmlFor="takenOn">Date these photos were taken / provided</label><input id="takenOn" name="takenOn" type="date" required value={uploadDate} onChange={e => setUploadDate(e.target.value)} /></div>
+        </div>
+
+        <div
+          className={`upload-dropzone ${dragOver ? 'is-drag-over' : ''}`}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+        >
+          <UploadCloud size={26} />
+          <p><b>Drag photos here</b> or <label htmlFor="files" className="upload-browse-link">browse files</label></p>
+          <input id="files" type="file" accept="image/*" multiple onChange={pickFiles} style={{ display: 'none' }} />
+        </div>
+
+        {files.length > 0 && <div className="upload-preview-grid">
+          {files.map((file, i) => <div className="upload-preview-item" key={`${file.name}-${i}`}>
+            <img src={URL.createObjectURL(file)} alt="" />
+            <button type="button" onClick={() => removeFile(i)} aria-label={`Remove ${file.name}`}><X size={13} /></button>
+          </div>)}
+        </div>}
+        {files.length > 0 && <small>{files.length} photo{files.length === 1 ? '' : 's'} ready to upload.</small>}
+
+        {error && <p className="form-error">{error}</p>}
+        <div className="editor-actions"><button className="button dark" disabled={uploading}><UploadCloud size={16} />{uploading ? (progress || 'Uploading…') : `Upload ${files.length || ''} batch`}</button></div>
+      </form>
+
+      <div className="investor-groups">
+        {groups.map(group => <details className="investor-group" key={group.category.id} open>
+          <summary>
+            <span className="investor-group-title">{group.category.name}</span>
+            <span className="investor-group-count">{group.count} photo{group.count === 1 ? '' : 's'} · {group.dates.length} date{group.dates.length === 1 ? '' : 's'}</span>
+          </summary>
+          {group.dates.length === 0 && <p className="admin-helper" style={{ padding: '0 0 16px' }}>No photos in this category yet.</p>}
+          {group.dates.map(({ date, images: dateImages }) => <div className="investor-date-group" key={date}>
+            <span className="investor-date-label">{formatAuctionDate(date)} <em>({dateImages.length})</em></span>
+            <div className="investor-photo-grid">
+              {dateImages.map(image => <div className="investor-photo-card" key={image.id}>
+                <img src={image.image} alt={image.title} loading="lazy" />
+                <button className="investor-photo-delete" onClick={() => setPendingDelete(image)} aria-label="Delete photo"><Trash2 size={14} /></button>
+              </div>)}
+            </div>
+          </div>)}
+        </details>)}
+        {groups.length === 0 && <div className="admin-empty">No categories yet — use &quot;Manage categories&quot; to add one first.</div>}
+      </div>
+    </>}
+    {showCategoryModal && <InvestorCategoryModal categories={categories} onClose={() => setShowCategoryModal(false)} onChange={setCategories} />}
+    {pendingDelete && <ConfirmDialog title="Delete this photo?" message="This can't be undone." confirmLabel="Delete" tone="danger" onConfirm={() => { remove(pendingDelete.id); setPendingDelete(null); }} onCancel={() => setPendingDelete(null)} />}
+  </>;
+}

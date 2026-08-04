@@ -14,7 +14,8 @@ create table if not exists public.hubs (
   description text not null default '',
   auction_date date,
   whatsapp text,
-  status text not null default 'Upcoming' check (status in ('Active', 'Upcoming', 'Draft')),
+  contact_number text,
+  maps_url text,
   image_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -46,7 +47,6 @@ create table if not exists public.gallery_images (
   tags text[] not null default '{}',
   slug text,
   image_url text,
-  status text not null default 'Draft' check (status in ('Draft', 'Published')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -74,6 +74,43 @@ create table if not exists public.documents (
   file_name text,
   file_url text,
   file_size bigint,
+  issue_date date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Investor gallery (separate from the public gallery — reached only via the
+-- footer link, filtered by a managed category list + the date the team
+-- uploaded that batch of photos).
+-- ---------------------------------------------------------------------------
+create table if not exists public.investor_gallery_categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text not null unique,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.investor_gallery_images (
+  id uuid primary key default gen_random_uuid(),
+  title text not null default '',
+  category text not null,
+  taken_on date not null,
+  image_url text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Careers / job openings
+-- ---------------------------------------------------------------------------
+create table if not exists public.job_openings (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  department text,
+  location text,
+  employment_type text,
+  description text,
   status text not null default 'Draft' check (status in ('Draft', 'Published')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -130,6 +167,14 @@ drop trigger if exists set_updated_at on public.site_settings;
 create trigger set_updated_at before update on public.site_settings
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on public.investor_gallery_images;
+create trigger set_updated_at before update on public.investor_gallery_images
+  for each row execute function public.set_updated_at();
+
+drop trigger if exists set_updated_at on public.job_openings;
+create trigger set_updated_at before update on public.job_openings
+  for each row execute function public.set_updated_at();
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- The public site reads directly with the anon key, so SELECT is open to
@@ -144,6 +189,9 @@ alter table public.gallery_images enable row level security;
 alter table public.testimonials enable row level security;
 alter table public.documents enable row level security;
 alter table public.site_settings enable row level security;
+alter table public.investor_gallery_categories enable row level security;
+alter table public.investor_gallery_images enable row level security;
+alter table public.job_openings enable row level security;
 
 drop policy if exists "Public read hubs" on public.hubs;
 create policy "Public read hubs" on public.hubs for select using (true);
@@ -162,6 +210,15 @@ create policy "Public read documents" on public.documents for select using (true
 
 drop policy if exists "Public read site_settings" on public.site_settings;
 create policy "Public read site_settings" on public.site_settings for select using (true);
+
+drop policy if exists "Public read investor_gallery_categories" on public.investor_gallery_categories;
+create policy "Public read investor_gallery_categories" on public.investor_gallery_categories for select using (true);
+
+drop policy if exists "Public read investor_gallery_images" on public.investor_gallery_images;
+create policy "Public read investor_gallery_images" on public.investor_gallery_images for select using (true);
+
+drop policy if exists "Public read job_openings" on public.job_openings;
+create policy "Public read job_openings" on public.job_openings for select using (true);
 
 -- ---------------------------------------------------------------------------
 -- Storage bucket for uploaded photos/documents

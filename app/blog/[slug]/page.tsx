@@ -1,2 +1,39 @@
-import {Footer, PageHero} from '@/components/site-chrome'; import Link from 'next/link';
-export default async function Article({params}:{params:Promise<{slug:string}>}){const {slug}=await params; return <><PageHero eyebrow="Sustainable farming · 6 min read" title="The future of sustainable livestock is local." copy="How careful systems, close observation, and shared knowledge can create better outcomes on every farm."/><article className="content"><div className="shell" style={{maxWidth:820}}><p className="lede">At Graze Valley, sustainability is not an abstract promise. It is built into the rhythm of every day: what animals eat, how they rest, what we observe, and how we respond.</p><h2 className="display split-heading">Care is a system, not a slogan.</h2><p className="lede">Modern livestock farming works best when it listens closely. Scientific stall-feeding gives each animal a balanced diet. Consistent health monitoring helps our teams act early. Purposeful habitats make daily care calmer and more reliable.</p><p className="lede">Those practices have a wider impact too. Better animal wellbeing supports more predictable outcomes for farmers, buyers, and the communities around each hub.</p><Link href="/blog" className="button light">← Back to journal</Link><p style={{color:'#687369',fontSize:12}}>Article reference: {slug}</p></div></article><Footer/></>}
+'use client';
+
+import { use, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Footer, Header } from '@/components/site-chrome';
+import { Item, fetchBlogPosts } from '@/lib/cms';
+
+export default function Article({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug: id } = use(params);
+  const [post, setPost] = useState<Item | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchBlogPosts().then(posts => { if (cancelled) return; setPost(posts.find(p => p.id === id && p.status !== 'Draft') || null); setReady(true); }).catch(() => setReady(true));
+    return () => { cancelled = true; };
+  }, [id]);
+
+  if (ready && !post) return <><Header /><section className="page-hero"><div className="shell"><span className="eyebrow">Not found</span><h1 className="display">This article isn&apos;t available.</h1><p>It may have been unpublished or the link is out of date.</p></div></section><div className="content shell"><Link href="/blog" className="button light">← Back to journal</Link></div><Footer /></>;
+
+  return <>
+    <Header />
+    <section className="page-hero">
+      <div className="shell">
+        <span className="eyebrow">{post ? `${post.category || 'Journal'} · ${post.readTime || ''}` : 'Loading…'}</span>
+        <h1 className="display">{post?.title || ''}</h1>
+        {post?.subheading && <p>{post.subheading}</p>}
+      </div>
+    </section>
+    <article className="content">
+      <div className="shell" style={{ maxWidth: 820 }}>
+        {post?.image && <img src={post.image} alt="" style={{ width: '100%', borderRadius: 22, marginBottom: 32 }} />}
+        {post?.content && <div className="article-body" dangerouslySetInnerHTML={{ __html: post.content }} />}
+        <Link href="/blog" className="button light" style={{ marginTop: 32 }}>← Back to journal</Link>
+      </div>
+    </article>
+    <Footer />
+  </>;
+}

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { PasswordField } from '@/components/password-field';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -51,14 +52,8 @@ export default function ResetPasswordPage() {
             <p className="admin-helper">Loading…</p>
           ) : (
             <form onSubmit={submit}>
-              <div className="field">
-                <label htmlFor="password">New password</label>
-                <input id="password" type="password" required minLength={8} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
-              </div>
-              <div className="field">
-                <label htmlFor="confirm">Confirm password</label>
-                <input id="confirm" type="password" required minLength={8} value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="••••••••" />
-              </div>
+              <PasswordField id="password" label="New password" value={password} onChange={setPassword} placeholder="••••••••" minLength={8} />
+              <PasswordField id="confirm" label="Confirm password" value={confirm} onChange={setConfirm} placeholder="••••••••" minLength={8} />
               {error && <p className="form-error">{error}</p>}
               <button className="button dark" disabled={status === 'saving'}>
                 <KeyRound size={16} />
