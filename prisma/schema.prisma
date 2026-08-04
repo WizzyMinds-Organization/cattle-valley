@@ -1,0 +1,10 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+enum Role { ADMIN EDITOR }
+model User { id String @id @default(cuid()) email String @unique name String? role Role @default(EDITOR) posts Post[] createdAt DateTime @default(now()) }
+model Post { id String @id @default(cuid()) title String slug String @unique excerpt String content String category String tags String[] coverImage String? published Boolean @default(false) authorId String author User @relation(fields:[authorId],references:[id]) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
+model Hub { id String @id @default(cuid()) name String location String description String manager String? phone String? auctionDate DateTime? active Boolean @default(true) images Media[] createdAt DateTime @default(now()) }
+model Media { id String @id @default(cuid()) url String alt String? category String? hubId String? hub Hub? @relation(fields:[hubId],references:[id]) createdAt DateTime @default(now()) }
+model Testimonial { id String @id @default(cuid()) name String role String quote String active Boolean @default(true) }
+model FAQ { id String @id @default(cuid()) question String answer String order Int @default(0) active Boolean @default(true) }
+model Document { id String @id @default(cuid()) title String url String category String createdAt DateTime @default(now()) }

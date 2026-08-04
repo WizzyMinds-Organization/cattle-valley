@@ -1,0 +1,2 @@
+import {Footer, PageHero} from '@/components/site-chrome'; import {BlogBrowser} from '@/components/blog-browser';
+export default function Blog(){return <><PageHero eyebrow="The journal" title="Practical knowledge, shared generously." copy="Observations from the field, ideas from our experts, and a clearer picture of modern livestock farming."/><main className="content"><div className="shell"><BlogBrowser/></div></main><Footer/></>}

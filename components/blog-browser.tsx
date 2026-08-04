@@ -1,0 +1,5 @@
+'use client';
+import {useEffect,useState} from 'react'; import Link from 'next/link'; import {localCmsStorageKey} from '@/lib/local-cms';
+type Blog={id:string;title:string;detail:string;subheading?:string;image?:string;status?:string};
+const fallback:Blog[]=[{id:'fallback',title:'The future of sustainable livestock is local',detail:'Sustainable Farming · 6 min read',subheading:'A more considered model for India’s livestock future.',image:'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=900&q=80'}];
+export function BlogBrowser(){const[posts,setPosts]=useState<Blog[]>(fallback);useEffect(()=>{try{const cms=JSON.parse(localStorage.getItem(localCmsStorageKey)||'{}');if(Array.isArray(cms.Blogs))setPosts(cms.Blogs.filter((post:Blog)=>post.status!=='Draft'))}catch{}},[]);return <div className="hub-grid">{posts.map(post=><article className="card article-card" key={post.id}>{post.image&&<img src={post.image} alt=""/>}<div><span className="hub-meta">{post.detail}</span><h3>{post.title}</h3>{post.subheading&&<p>{post.subheading}</p>}<Link href={`/blog/${post.id}`} className="text-link">Read article →</Link></div></article>)}</div>}

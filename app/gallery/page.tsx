@@ -1,0 +1,2 @@
+import {Footer, PageHero} from '@/components/site-chrome'; import { GalleryBrowser } from '@/components/gallery-browser';
+export default function Gallery(){return <><PageHero eyebrow="Our gallery" title="A closer look at the everyday." copy="Facilities, livestock, people, and the quiet work of doing things properly."/><main className="content"><div className="shell"><GalleryBrowser/></div></main><Footer/></>}
