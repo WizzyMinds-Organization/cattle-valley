@@ -92,24 +92,26 @@ export function InvestorGalleryAdmin() {
     {ready && <>
       <p className="admin-helper">Bulk-upload a batch of photos for one category and one date — this is what the team shares with investors as a filtered link.</p>
       <form className="card editor editor-wide" onSubmit={submitBatch}>
-        <div className="upload-fields-row">
-          <div className="field">
+        <div className="upload-layout">
+          <div className="field upload-field-category">
             <label htmlFor="category">Category</label>
             <Select id="category" name="category" placeholder="Select a category…" value={uploadCategory} onChange={setUploadCategory} options={categories.map(c => ({ value: c.slug, label: c.name }))} />
             {categories.length === 0 && <small>No categories yet — use &quot;Manage categories&quot; above to add one first.</small>}
           </div>
-          <div className="field"><label htmlFor="takenOn">Date these photos were taken / provided</label><DatePicker id="takenOn" name="takenOn" value={uploadDate} onChange={setUploadDate} /></div>
-        </div>
+          <div className="field upload-field-date"><label htmlFor="takenOn">Date these photos were taken / provided</label><DatePicker id="takenOn" name="takenOn" value={uploadDate} onChange={setUploadDate} /></div>
 
-        <div
-          className={`upload-dropzone ${dragOver ? 'is-drag-over' : ''}`}
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={onDrop}
-        >
-          <UploadCloud size={26} />
-          <p><b>Drag photos here</b> or <label htmlFor="files" className="upload-browse-link">browse files</label></p>
-          <input id="files" type="file" accept="image/*" multiple onChange={pickFiles} style={{ display: 'none' }} />
+          <div
+            className={`upload-dropzone ${dragOver ? 'is-drag-over' : ''}`}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+          >
+            <UploadCloud size={26} />
+            <p><b>Drag photos here</b> or <label htmlFor="files" className="upload-browse-link">browse files</label></p>
+            <input id="files" type="file" accept="image/*" multiple onChange={pickFiles} style={{ display: 'none' }} />
+          </div>
+
+          <div className="field upload-submit-field"><button className="button dark" disabled={uploading}><UploadCloud size={16} />{uploading ? (progress || 'Uploading…') : `Upload ${files.length || ''} batch`}</button></div>
         </div>
 
         {files.length > 0 && <div className="upload-preview-grid">
@@ -121,7 +123,6 @@ export function InvestorGalleryAdmin() {
         {files.length > 0 && <small>{files.length} photo{files.length === 1 ? '' : 's'} ready to upload.</small>}
 
         {error && <p className="form-error">{error}</p>}
-        <div className="editor-actions"><button className="button dark" disabled={uploading}><UploadCloud size={16} />{uploading ? (progress || 'Uploading…') : `Upload ${files.length || ''} batch`}</button></div>
       </form>
 
       <div className="investor-groups">

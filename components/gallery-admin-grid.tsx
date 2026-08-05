@@ -14,6 +14,7 @@ export function GalleryAdminGrid() {
   const [notice, setNotice] = useState('');
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
   const [activeTag, setActiveTag] = useState('all');
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +31,7 @@ export function GalleryAdminGrid() {
   const visible = activeTag === 'all' ? items : items.filter(item => (item.tags?.length ? item.tags : [item.slug || 'general']).includes(activeTag));
 
   return <>
-    <div className="admin-top"><div><h1 className="display">Gallery</h1><p className="admin-helper" style={{ margin: '6px 0 0' }}>{items.length} photo{items.length === 1 ? '' : 's'} · shown on the public Gallery page, newest first.</p></div><Link className="button dark" href="/admin/gallery/new"><Plus size={16} />Add gallery</Link></div>
+    <div className="admin-top"><div><h1 className="display">Gallery</h1></div><Link className="button dark" href="/admin/gallery/new"><Plus size={16} />Add gallery</Link></div>
     {notice && <div className="admin-notice">{notice}<button onClick={() => setNotice('')} aria-label="Close"><X size={14} /></button></div>}
     {loadError && <div className="admin-notice">Could not load content from Supabase: {loadError}</div>}
     {!ready && <PhotoGridSkeleton count={8} />}
@@ -41,8 +42,8 @@ export function GalleryAdminGrid() {
       </div>}
       {visible.length === 0 && <div className="admin-empty">No images in this category yet.</div>}
       <div className="admin-photo-grid">
-        {visible.map(item => <div className="admin-photo-card" key={item.id}>
-          <img src={item.image} alt={item.title} loading="lazy" />
+        {visible.map(item => <div className={`admin-photo-card${loadedImages[item.id] ? '' : ' skeleton-shimmer'}`} key={item.id}>
+          <img src={item.image} alt={item.title} loading="lazy" style={{ opacity: loadedImages[item.id] ? 1 : 0 }} onLoad={() => setLoadedImages(prev => ({ ...prev, [item.id]: true }))} />
           <div className="admin-photo-overlay">
             <div className="admin-photo-info"><b>{item.title}</b><span>{item.detail}</span></div>
             <div className="admin-photo-actions">

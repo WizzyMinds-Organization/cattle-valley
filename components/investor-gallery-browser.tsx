@@ -109,6 +109,7 @@ export function InvestorGalleryBrowser() {
     {!isLatestView && datesForActive.length === 0 && <p className="gallery-empty">No photos in this category yet.</p>}
     {(isLatestView || datesForActive.length > 0) && (loadingImages ? <GallerySkeleton /> : <>
       <div className="masonry">{images.map(image => <img key={image.id} src={image.image} alt={image.title} loading="lazy" />)}</div>
+      {images.length === 0 && !isLatestView && !appliedDate && <p className="gallery-empty">Select a date and click &quot;Apply filter&quot; to see the photos.</p>}
       {images.length === 0 && !isLatestView && appliedDate && <p className="gallery-empty">No photos for this category and date yet.</p>}
       {images.length === 0 && isLatestView && <p className="gallery-empty">No investor photos have been published yet.</p>}
     </>)}

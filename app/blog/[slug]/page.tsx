@@ -29,7 +29,7 @@ export default function Article({ params }: { params: Promise<{ slug: string }> 
     </section>
     <article className="content">
       <div className="shell">
-        {post?.image && <img src={post.image} alt="" style={{ width: '100%', borderRadius: 22, marginBottom: 32 }} />}
+        {post?.image && <img src={post.image} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', borderRadius: 22, marginBottom: 32 }} />}
         {post?.content && <div className="article-body" dangerouslySetInnerHTML={{ __html: post.content }} />}
         <Link href="/blog" className="button light" style={{ marginTop: 32 }}>← Back to journal</Link>
       </div>

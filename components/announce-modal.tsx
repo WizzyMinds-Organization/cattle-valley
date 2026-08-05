@@ -42,7 +42,7 @@ export function AnnounceModal() {
         <ul className="announce-list">{upcoming.map(hub => <li key={hub.id}><CalendarDays size={15} /><span><b>{hub.title}</b>{formatAuctionDate(hub.auctionDate)} · {hub.location}</span></li>)}</ul>
       </div>}
       {hasNewContent && <Link href="/gallery" className="announce-notification" onClick={() => setOpen(false)}><ImageIcon size={16} /> New photos and documents were just added — see the gallery</Link>}
-      <div className="confirm-actions"><button className="button dark" onClick={() => setOpen(false)}>Got it</button></div>
+      <div className="confirm-actions"><button className="button dark" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setOpen(false)}>Got it</button></div>
     </div>
   </div>;
 }
