@@ -31,8 +31,8 @@ export function AnnounceModal() {
 
   if (!open) return null;
 
-  return <div className="confirm-overlay" onClick={() => setOpen(false)}>
-    <div className="confirm-dialog card announce-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Latest updates">
+  return <div className="confirm-overlay">
+    <div className="confirm-dialog card announce-modal" role="dialog" aria-modal="true" aria-label="Latest updates">
       <button type="button" className="announce-close" onClick={() => setOpen(false)} aria-label="Close">
         <X size={18} />
       </button>
