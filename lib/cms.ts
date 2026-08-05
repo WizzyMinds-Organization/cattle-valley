@@ -210,6 +210,22 @@ export async function fetchInvestorImages(): Promise<InvestorImage[]> {
   if (error) throw error;
   return (data as InvestorImageRow[]).map(investorImageRowToItem);
 }
+export type InvestorImageDate = { category: string; takenOn: string };
+export async function fetchInvestorImageDates(): Promise<InvestorImageDate[]> {
+  const { data, error } = await supabase.from('investor_gallery_images').select('category, taken_on').order('taken_on', { ascending: false });
+  if (error) throw error;
+  return (data as { category: string; taken_on: string }[]).map(row => ({ category: row.category, takenOn: row.taken_on }));
+}
+export async function fetchLatestInvestorImages(limit = 9): Promise<InvestorImage[]> {
+  const { data, error } = await supabase.from('investor_gallery_images').select('*').order('taken_on', { ascending: false }).order('created_at', { ascending: false }).limit(limit);
+  if (error) throw error;
+  return (data as InvestorImageRow[]).map(investorImageRowToItem);
+}
+export async function fetchInvestorImagesFor(category: string, takenOn: string): Promise<InvestorImage[]> {
+  const { data, error } = await supabase.from('investor_gallery_images').select('*').eq('category', category).eq('taken_on', takenOn);
+  if (error) throw error;
+  return (data as InvestorImageRow[]).map(investorImageRowToItem);
+}
 export async function saveInvestorCategory(category: Partial<InvestorCategory>, isNew: boolean): Promise<InvestorCategory> {
   const path = `/api/investor-gallery-categories${isNew ? '' : `/${category.id}`}`;
   const res = await fetch(path, { method: isNew ? 'POST' : 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(category) });

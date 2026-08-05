@@ -1,10 +1,14 @@
 'use client';
 
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useState } from 'react';
-import { Settings as SettingsIcon, Trash2, UploadCloud, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Settings as SettingsIcon, Trash2, UploadCloud, X } from 'lucide-react';
 import { InvestorCategory, InvestorImage, deleteInvestorImage, fetchInvestorCategories, fetchInvestorImages, formatAuctionDate, saveInvestorImage, uploadFile } from '@/lib/cms';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { InvestorCategoryModal } from '@/components/investor-category-modal';
+import { DatePicker, Select } from '@/components/ui-controls';
+import { InvestorGroupsSkeleton } from '@/components/skeletons';
+
+const DATES_PER_PAGE = 4;
 
 export function InvestorGalleryAdmin() {
   const [categories, setCategories] = useState<InvestorCategory[]>([]);
@@ -20,12 +24,17 @@ export function InvestorGalleryAdmin() {
   const [uploadCategory, setUploadCategory] = useState('');
   const [uploadDate, setUploadDate] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const [datePage, setDatePage] = useState<Record<string, number>>({});
 
   useEffect(() => {
     Promise.all([fetchInvestorCategories(), fetchInvestorImages()])
-      .then(([cats, imgs]) => { setCategories(cats); setImages(imgs); setReady(true); })
+      .then(([cats, imgs]) => { setCategories(cats); setImages(imgs); setReady(true); if (cats[0]) setOpenCategory(cats[0].id); })
       .catch(err => { setError(err instanceof Error ? err.message : 'Could not reach Supabase.'); setReady(true); });
   }, []);
+
+  function toggleCategory(id: string) { setOpenCategory(prev => prev === id ? null : id); }
+  function changeDatePage(categoryId: string, page: number) { setDatePage(prev => ({ ...prev, [categoryId]: page })); }
 
   function addFiles(list: FileList | File[]) {
     const incoming = Array.from(list).filter(f => f.type.startsWith('image/'));
@@ -77,22 +86,19 @@ export function InvestorGalleryAdmin() {
   }, [categories, images]);
 
   return <>
-    <div className="admin-top"><div><h1 className="display">Investor gallery</h1><p className="admin-helper" style={{ margin: '6px 0 0' }}>{images.length} photo{images.length === 1 ? '' : 's'} across {categories.length} categor{categories.length === 1 ? 'y' : 'ies'} — only reachable from the footer link.</p></div><button className="button light" onClick={() => setShowCategoryModal(true)}><SettingsIcon size={16} />Manage categories</button></div>
+    <div className="admin-top"><div><h1 className="display">Investor gallery</h1></div><button className="button light" onClick={() => setShowCategoryModal(true)}><SettingsIcon size={16} />Manage categories</button></div>
     {notice && <div className="admin-notice">{notice}<button onClick={() => setNotice('')} aria-label="Close"><X size={14} /></button></div>}
-    {!ready && <p className="admin-helper">Loading…</p>}
+    {!ready && <InvestorGroupsSkeleton />}
     {ready && <>
       <p className="admin-helper">Bulk-upload a batch of photos for one category and one date — this is what the team shares with investors as a filtered link.</p>
-      <form className="card editor" onSubmit={submitBatch}>
+      <form className="card editor editor-wide" onSubmit={submitBatch}>
         <div className="upload-fields-row">
           <div className="field">
             <label htmlFor="category">Category</label>
-            <select id="category" name="category" required value={uploadCategory} onChange={e => setUploadCategory(e.target.value)}>
-              <option value="" disabled>Select a category…</option>
-              {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
-            </select>
+            <Select id="category" name="category" placeholder="Select a category…" value={uploadCategory} onChange={setUploadCategory} options={categories.map(c => ({ value: c.slug, label: c.name }))} />
             {categories.length === 0 && <small>No categories yet — use &quot;Manage categories&quot; above to add one first.</small>}
           </div>
-          <div className="field"><label htmlFor="takenOn">Date these photos were taken / provided</label><input id="takenOn" name="takenOn" type="date" required value={uploadDate} onChange={e => setUploadDate(e.target.value)} /></div>
+          <div className="field"><label htmlFor="takenOn">Date these photos were taken / provided</label><DatePicker id="takenOn" name="takenOn" value={uploadDate} onChange={setUploadDate} /></div>
         </div>
 
         <div
@@ -119,22 +125,35 @@ export function InvestorGalleryAdmin() {
       </form>
 
       <div className="investor-groups">
-        {groups.map(group => <details className="investor-group" key={group.category.id} open>
-          <summary>
-            <span className="investor-group-title">{group.category.name}</span>
-            <span className="investor-group-count">{group.count} photo{group.count === 1 ? '' : 's'} · {group.dates.length} date{group.dates.length === 1 ? '' : 's'}</span>
-          </summary>
-          {group.dates.length === 0 && <p className="admin-helper" style={{ padding: '0 0 16px' }}>No photos in this category yet.</p>}
-          {group.dates.map(({ date, images: dateImages }) => <div className="investor-date-group" key={date}>
-            <span className="investor-date-label">{formatAuctionDate(date)} <em>({dateImages.length})</em></span>
-            <div className="investor-photo-grid">
-              {dateImages.map(image => <div className="investor-photo-card" key={image.id}>
-                <img src={image.image} alt={image.title} loading="lazy" />
-                <button className="investor-photo-delete" onClick={() => setPendingDelete(image)} aria-label="Delete photo"><Trash2 size={14} /></button>
+        {groups.map(group => {
+          const isOpen = openCategory === group.category.id;
+          const totalPages = Math.max(1, Math.ceil(group.dates.length / DATES_PER_PAGE));
+          const currentPage = Math.min(datePage[group.category.id] || 0, totalPages - 1);
+          const visibleDates = group.dates.slice(currentPage * DATES_PER_PAGE, currentPage * DATES_PER_PAGE + DATES_PER_PAGE);
+          return <div className="investor-group" key={group.category.id}>
+            <button type="button" className="investor-group-summary" onClick={() => toggleCategory(group.category.id)} aria-expanded={isOpen}>
+              <span className="investor-group-title">{group.category.name}</span>
+              <span className="investor-group-count">{group.count} photo{group.count === 1 ? '' : 's'} · {group.dates.length} date{group.dates.length === 1 ? '' : 's'}<ChevronDown size={16} className={`investor-group-chevron${isOpen ? ' is-open' : ''}`} /></span>
+            </button>
+            {isOpen && <>
+              {group.dates.length === 0 && <p className="admin-helper" style={{ padding: '0 0 16px' }}>No photos in this category yet.</p>}
+              {visibleDates.map(({ date, images: dateImages }) => <div className="investor-date-group" key={date}>
+                <span className="investor-date-label">{formatAuctionDate(date)} <em>({dateImages.length})</em></span>
+                <div className="investor-photo-grid">
+                  {dateImages.map(image => <div className="investor-photo-card" key={image.id}>
+                    <img src={image.image} alt={image.title} loading="lazy" />
+                    <button className="investor-photo-delete" onClick={() => setPendingDelete(image)} aria-label="Delete photo"><Trash2 size={14} /></button>
+                  </div>)}
+                </div>
               </div>)}
-            </div>
-          </div>)}
-        </details>)}
+              {totalPages > 1 && <div className="investor-pagination">
+                <button type="button" className="ui-date-nav" onClick={() => changeDatePage(group.category.id, currentPage - 1)} disabled={currentPage === 0} aria-label="Previous dates"><ChevronLeft size={16} /></button>
+                <span>Page {currentPage + 1} of {totalPages}</span>
+                <button type="button" className="ui-date-nav" onClick={() => changeDatePage(group.category.id, currentPage + 1)} disabled={currentPage === totalPages - 1} aria-label="Next dates"><ChevronRight size={16} /></button>
+              </div>}
+            </>}
+          </div>;
+        })}
         {groups.length === 0 && <div className="admin-empty">No categories yet — use &quot;Manage categories&quot; to add one first.</div>}
       </div>
     </>}

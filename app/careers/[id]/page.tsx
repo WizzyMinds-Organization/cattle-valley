@@ -29,7 +29,7 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
       </div>
     </section>
     <article className="content">
-      <div className="shell" style={{ maxWidth: 820 }}>
+      <div className="shell">
         {job?.content && <div className="article-body" dangerouslySetInnerHTML={{ __html: job.content }} />}
         <Link href="/careers" className="button light" style={{ marginTop: 32 }}>← Back to careers</Link>
       </div>

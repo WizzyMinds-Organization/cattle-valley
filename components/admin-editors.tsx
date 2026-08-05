@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useState } from 'react';
 import { Save, X } from 'lucide-react';
 import { Item, Status, formatAuctionDate, uploadFile } from '@/lib/cms';
 import { RichTextEditor } from './rich-text-editor';
+import { DatePicker, Select } from './ui-controls';
 
 type EditorProps = { item: Item; onCancel: () => void; onSave: (item: Item) => void; onDirty: () => void };
 
@@ -13,12 +14,13 @@ export function Frame({ children, title, onCancel }: { children: React.ReactNode
 
 export function HubEditor({ item, onCancel, onSave, onDirty }: EditorProps) {
   const [image, setImage] = useState(item.image || '');
+  const [auctionDate, setAuctionDate] = useState(item.auctionDate || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
-    const selected = String(d.get('auctionDate'));
+    const selected = auctionDate;
     const file = d.get('image') as File;
     setBusy(true); setError('');
     try {
@@ -27,7 +29,7 @@ export function HubEditor({ item, onCancel, onSave, onDirty }: EditorProps) {
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to upload photo.'); }
     finally { setBusy(false); }
   }
-  return <Frame title={item.title ? 'Edit hub & auction' : 'New hub'} onCancel={onCancel}><form onSubmit={submit} onChange={onDirty}><Field label="Hub name" name="title" value={item.title} /><Field label="Location" name="location" value={item.location} placeholder="Malappuram, Kerala" /><Field label="Hub description" name="description" value={item.description} textarea /><div className="field"><label htmlFor="auctionDate">Upcoming auction date</label><input id="auctionDate" name="auctionDate" type="date" defaultValue={item.auctionDate || ''} required /></div><Field label="Auction WhatsApp number" name="whatsapp" value={item.whatsapp} placeholder="919876543210" hint="Country code only—no +, spaces, or punctuation. Each hub can have a different number." /><div className="field"><label htmlFor="contactNumber">Contact number (shown on the card)</label><input id="contactNumber" name="contactNumber" defaultValue={item.contactNumber} placeholder="+91 98765 43210" /><small>Displayed as visible text on the hub card. Can differ from the WhatsApp number above.</small></div><div className="field"><label htmlFor="mapsUrl">Google Maps link</label><input id="mapsUrl" name="mapsUrl" defaultValue={item.mapsUrl} placeholder="https://maps.app.goo.gl/…" /><small>Paste the link from Google Maps' Share button. Leave blank to hide the "View location" link on the card.</small></div><Upload label="Hub photo" name="image" image={image} onImage={value => { setImage(value); onDirty(); }} required={!image} />{error && <p className="form-error">{error}</p>}<Actions onCancel={onCancel} busy={busy} /></form></Frame>;
+  return <Frame title={item.title ? 'Edit hub & auction' : 'New hub'} onCancel={onCancel}><form onSubmit={submit} onChange={onDirty}><Field label="Hub name" name="title" value={item.title} /><Field label="Location" name="location" value={item.location} placeholder="Malappuram, Kerala" /><Field label="Hub description" name="description" value={item.description} textarea /><div className="field"><label htmlFor="auctionDate">Upcoming auction date</label><DatePicker id="auctionDate" name="auctionDate" value={auctionDate} onChange={value => { setAuctionDate(value); onDirty(); }} /></div><Field label="Auction WhatsApp number" name="whatsapp" value={item.whatsapp} placeholder="919876543210" hint="Country code only—no +, spaces, or punctuation. Each hub can have a different number." /><div className="field"><label htmlFor="contactNumber">Contact number (shown on the card)</label><input id="contactNumber" name="contactNumber" defaultValue={item.contactNumber} placeholder="+91 98765 43210" /><small>Displayed as visible text on the hub card. Can differ from the WhatsApp number above.</small></div><div className="field"><label htmlFor="mapsUrl">Google Maps link</label><input id="mapsUrl" name="mapsUrl" defaultValue={item.mapsUrl} placeholder="https://maps.app.goo.gl/…" /><small>Paste the link from Google Maps' Share button. Leave blank to hide the "View location" link on the card.</small></div><Upload label="Hub photo" name="image" image={image} onImage={value => { setImage(value); onDirty(); }} required={!image} />{error && <p className="form-error">{error}</p>}<Actions onCancel={onCancel} busy={busy} /></form></Frame>;
 }
 
 export function JobEditor({ item, onCancel, onSave, onDirty }: EditorProps) {
@@ -89,6 +91,7 @@ export function TestimonialEditor({ item, onCancel, onSave, onDirty }: EditorPro
 export function DocumentEditor({ item, onCancel, onSave, onDirty }: EditorProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [issueDate, setIssueDate] = useState(item.issueDate || '');
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
@@ -98,11 +101,11 @@ export function DocumentEditor({ item, onCancel, onSave, onDirty }: EditorProps)
     setBusy(true); setError('');
     try {
       const uploaded = file?.size ? await uploadFile(file) : null;
-      onSave({ ...item, title: String(d.get('title')), category: String(d.get('category')) || 'General', issueDate: String(d.get('issueDate') || ''), url: uploaded?.url || item.url, fileName: uploaded?.name || item.fileName, size: uploaded?.size || item.size, detail: uploaded ? `${uploaded.name} · ${(uploaded.size / 1024 / 1024).toFixed(1)} MB` : item.detail, createdAt: item.createdAt || new Date().toISOString() });
+      onSave({ ...item, title: String(d.get('title')), category: String(d.get('category')) || 'General', issueDate, url: uploaded?.url || item.url, fileName: uploaded?.name || item.fileName, size: uploaded?.size || item.size, detail: uploaded ? `${uploaded.name} · ${(uploaded.size / 1024 / 1024).toFixed(1)} MB` : item.detail, createdAt: item.createdAt || new Date().toISOString() });
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to upload document.'); }
     finally { setBusy(false); }
   }
-  return <Frame title={item.title ? 'Edit document' : 'Upload document'} onCancel={onCancel}><form onSubmit={submit} onChange={onDirty}><Field label="Document title" name="title" value={item.title} /><Field label="Category" name="category" value={item.category} placeholder="Policies" /><div className="field"><label htmlFor="issueDate">Issue date</label><input id="issueDate" name="issueDate" type="date" defaultValue={item.issueDate || ''} required /></div><div className="field"><label htmlFor="document">Document file</label><input id="document" name="document" type="file" accept=".pdf,.doc,.docx" /><small>PDF, DOC, or DOCX · maximum file size 5 MB.</small></div>{error && <p className="form-error">{error}</p>}<Actions onCancel={onCancel} busy={busy} /></form></Frame>;
+  return <Frame title={item.title ? 'Edit document' : 'Upload document'} onCancel={onCancel}><form onSubmit={submit} onChange={onDirty}><Field label="Document title" name="title" value={item.title} /><Field label="Category" name="category" value={item.category} placeholder="Policies" /><div className="field"><label htmlFor="issueDate">Issue date</label><DatePicker id="issueDate" name="issueDate" value={issueDate} onChange={value => { setIssueDate(value); onDirty(); }} /></div><div className="field"><label htmlFor="document">Document file</label><input id="document" name="document" type="file" accept=".pdf,.doc,.docx" /><small>PDF, DOC, or DOCX · maximum file size 5 MB.</small></div>{error && <p className="form-error">{error}</p>}<Actions onCancel={onCancel} busy={busy} /></form></Frame>;
 }
 
 export function Field({ label, name, value, placeholder, textarea, hint }: { label: string; name: string; value?: string; placeholder?: string; textarea?: boolean; hint?: string }) {
@@ -115,7 +118,8 @@ export function Upload({ label, name, image, onImage, required }: { label: strin
 }
 
 export function StatusField({ value }: { value?: Status }) {
-  return <div className="field"><label htmlFor="status">Status</label><select id="status" name="status" defaultValue={value}><option>Draft</option><option>Published</option><option>Active</option><option>Upcoming</option></select></div>;
+  const [status, setStatus] = useState(value || 'Draft');
+  return <div className="field"><label htmlFor="status">Status</label><Select id="status" name="status" value={status} onChange={v => setStatus(v as Status)} options={[{ value: 'Draft', label: 'Draft' }, { value: 'Published', label: 'Published' }, { value: 'Active', label: 'Active' }, { value: 'Upcoming', label: 'Upcoming' }]} /></div>;
 }
 
 export function StatusToggle({ value }: { value?: Status }) {

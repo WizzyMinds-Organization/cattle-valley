@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { Item, deleteItem } from '@/lib/cms';
 import { ConfirmDialog } from './confirm-dialog';
+import { AdminRowsSkeleton } from './skeletons';
 
 export type ContentModule = 'Blogs' | 'Hubs & auctions' | 'Gallery' | 'Testimonials' | 'Documents' | 'Careers';
 
@@ -37,7 +38,7 @@ export function ModuleListPage({ module, slug, singular, fetchItems, showStatus 
       <div className="admin-top"><div><h1 className="display">{module}</h1></div><Link className="button dark" href={`/admin/${slug}/new`}><Plus size={16} />Add {singular}</Link></div>
       {notice && <div className="admin-notice">{notice}<button onClick={() => setNotice('')} aria-label="Close"><X size={14} /></button></div>}
       {loadError && <div className="admin-notice">Could not load content from Supabase: {loadError}</div>}
-      {!ready && <p className="admin-helper">Loading…</p>}
+      {!ready && <AdminRowsSkeleton />}
       {ready && <>
         <p className="admin-helper">Changes save straight to the database and go live on the public site immediately.</p>
         <div className="admin-table card">

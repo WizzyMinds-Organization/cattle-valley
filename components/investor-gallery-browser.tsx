@@ -1,32 +1,44 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { InvestorCategory, InvestorImage, fetchInvestorCategories, fetchInvestorImages, formatAuctionDate } from '@/lib/cms';
+import { InvestorCategory, InvestorImage, InvestorImageDate, fetchInvestorCategories, fetchInvestorImageDates, fetchInvestorImagesFor, fetchLatestInvestorImages, formatAuctionDate } from '@/lib/cms';
+import { Select } from '@/components/ui-controls';
+
+const LATEST_COUNT = 9;
+
+function GallerySkeleton() {
+  return <div className="masonry" aria-hidden="true">{Array.from({ length: 6 }).map((_, i) => <div className="skeleton-tile" key={i} />)}</div>;
+}
 
 export function InvestorGalleryBrowser() {
   const [categories, setCategories] = useState<InvestorCategory[]>([]);
-  const [images, setImages] = useState<InvestorImage[]>([]);
-  const [category, setCategory] = useState('');
-  const [date, setDate] = useState('');
+  const [dateIndex, setDateIndex] = useState<InvestorImageDate[]>([]);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    Promise.all([fetchInvestorCategories(), fetchInvestorImages()]).then(([cats, imgs]) => {
-      setCategories(cats); setImages(imgs);
-      const params = new URLSearchParams(window.location.search);
-      const urlCategory = params.get('category');
-      const urlDate = params.get('date');
-      const initialCategory = urlCategory || cats[0]?.slug || '';
-      const datesForCategory = imgs.filter(i => i.category === initialCategory).map(i => i.takenOn).sort().reverse();
-      const initialDate = urlDate || datesForCategory[0] || '';
-      setCategory(initialCategory);
-      setDate(initialDate);
-      setReady(true);
-    }).catch(() => setReady(true));
-  }, []);
+  const [activeCategory, setActiveCategory] = useState(''); // '' = Latest view
+  const [selectedDate, setSelectedDate] = useState('');
+  const [appliedDate, setAppliedDate] = useState('');
 
-  const dates = useMemo(() => Array.from(new Set(images.filter(i => i.category === category).map(i => i.takenOn))).sort().reverse(), [images, category]);
-  const visible = images.filter(i => i.category === category && i.takenOn === date);
+  const [images, setImages] = useState<InvestorImage[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
+
+  const isLatestView = activeCategory === '';
+  const datesForActive = useMemo(() => Array.from(new Set(dateIndex.filter(d => d.category === activeCategory).map(d => d.takenOn))).sort().reverse(), [dateIndex, activeCategory]);
+
+  async function loadLatest() {
+    setLoadingImages(true);
+    try { setImages(await fetchLatestInvestorImages(LATEST_COUNT)); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not load photos.'); }
+    finally { setLoadingImages(false); }
+  }
+
+  async function loadFiltered(cat: string, takenOn: string) {
+    setLoadingImages(true);
+    try { setImages(await fetchInvestorImagesFor(cat, takenOn)); setAppliedDate(takenOn); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not load photos.'); }
+    finally { setLoadingImages(false); }
+  }
 
   function updateUrl(nextCategory: string, nextDate: string) {
     const url = new URL(window.location.href);
@@ -35,33 +47,71 @@ export function InvestorGalleryBrowser() {
     window.history.replaceState({}, '', url);
   }
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlCategory = params.get('category') || '';
+    const urlDate = params.get('date') || '';
+
+    Promise.all([fetchInvestorCategories(), fetchInvestorImageDates()]).then(([cats, dates]) => {
+      setCategories(cats);
+      setDateIndex(dates);
+      setReady(true);
+      if (urlCategory) {
+        const datesForCategory = dates.filter(d => d.category === urlCategory).map(d => d.takenOn).sort().reverse();
+        const initialDate = urlDate || datesForCategory[0] || '';
+        setActiveCategory(urlCategory);
+        setSelectedDate(initialDate);
+        if (initialDate) loadFiltered(urlCategory, initialDate);
+      } else {
+        loadLatest();
+      }
+    }).catch(err => { setError(err instanceof Error ? err.message : 'Could not load gallery.'); setReady(true); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function chooseLatest() {
+    setActiveCategory('');
+    setSelectedDate('');
+    setAppliedDate('');
+    updateUrl('', '');
+    loadLatest();
+  }
+
   function chooseCategory(slug: string) {
-    setCategory(slug);
-    const nextDates = Array.from(new Set(images.filter(i => i.category === slug).map(i => i.takenOn))).sort().reverse();
-    const nextDate = nextDates[0] || '';
-    setDate(nextDate);
-    updateUrl(slug, nextDate);
+    setActiveCategory(slug);
+    const nextDates = Array.from(new Set(dateIndex.filter(d => d.category === slug).map(d => d.takenOn))).sort().reverse();
+    setSelectedDate(nextDates[0] || '');
+    setAppliedDate('');
+    setImages([]);
   }
 
-  function chooseDate(value: string) {
-    setDate(value);
-    updateUrl(category, value);
+  function applyFilter() {
+    if (!activeCategory || !selectedDate) return;
+    updateUrl(activeCategory, selectedDate);
+    loadFiltered(activeCategory, selectedDate);
   }
 
-  if (!ready) return <div className="masonry" aria-hidden="true">{Array.from({ length: 6 }).map((_, i) => <div className="skeleton-tile" key={i} />)}</div>;
+  if (!ready) return <GallerySkeleton />;
 
   if (categories.length === 0) return <p className="gallery-empty">No investor photos have been published yet.</p>;
 
   return <>
     <div className="investor-gallery-controls">
       <div className="gallery-filters" aria-label="Investor gallery categories">
-        {categories.map(c => <button key={c.id} className={category === c.slug ? 'is-active' : ''} onClick={() => chooseCategory(c.slug)}>{c.name}</button>)}
+        <button className={isLatestView ? 'is-active' : ''} onClick={chooseLatest}>Latest</button>
+        {categories.map(c => <button key={c.id} className={activeCategory === c.slug ? 'is-active' : ''} onClick={() => chooseCategory(c.slug)}>{c.name}</button>)}
       </div>
-      {dates.length > 0 && <select className="investor-date-select" value={date} onChange={e => chooseDate(e.target.value)} aria-label="Select date">
-        {dates.map(d => <option key={d} value={d}>{formatAuctionDate(d)}</option>)}
-      </select>}
+      {!isLatestView && datesForActive.length > 0 && <div className="investor-filter-apply">
+        <Select className="investor-date-select" value={selectedDate} onChange={setSelectedDate} ariaLabel="Select date" options={datesForActive.map(d => ({ value: d, label: formatAuctionDate(d) }))} />
+        <button className="button dark" onClick={applyFilter} disabled={loadingImages || (selectedDate === appliedDate && images.length > 0)}>Apply filter</button>
+      </div>}
     </div>
-    <div className="masonry">{visible.map(image => <img key={image.id} src={image.image} alt={image.title} loading="lazy" />)}</div>
-    {visible.length === 0 && <p className="gallery-empty">No photos for this category and date yet.</p>}
+    {!isLatestView && datesForActive.length === 0 && <p className="gallery-empty">No photos in this category yet.</p>}
+    {(isLatestView || datesForActive.length > 0) && (loadingImages ? <GallerySkeleton /> : <>
+      <div className="masonry">{images.map(image => <img key={image.id} src={image.image} alt={image.title} loading="lazy" />)}</div>
+      {images.length === 0 && !isLatestView && appliedDate && <p className="gallery-empty">No photos for this category and date yet.</p>}
+      {images.length === 0 && isLatestView && <p className="gallery-empty">No investor photos have been published yet.</p>}
+    </>)}
+    {error && <p className="gallery-empty">{error}</p>}
   </>;
 }

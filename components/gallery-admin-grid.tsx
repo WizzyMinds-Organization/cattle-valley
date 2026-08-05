@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Item, deleteItem, fetchGalleryImages } from '@/lib/cms';
 import { ConfirmDialog } from './confirm-dialog';
+import { PhotoGridSkeleton } from './skeletons';
 
 export function GalleryAdminGrid() {
   const [items, setItems] = useState<Item[]>([]);
@@ -32,7 +33,7 @@ export function GalleryAdminGrid() {
     <div className="admin-top"><div><h1 className="display">Gallery</h1><p className="admin-helper" style={{ margin: '6px 0 0' }}>{items.length} photo{items.length === 1 ? '' : 's'} · shown on the public Gallery page, newest first.</p></div><Link className="button dark" href="/admin/gallery/new"><Plus size={16} />Add gallery</Link></div>
     {notice && <div className="admin-notice">{notice}<button onClick={() => setNotice('')} aria-label="Close"><X size={14} /></button></div>}
     {loadError && <div className="admin-notice">Could not load content from Supabase: {loadError}</div>}
-    {!ready && <p className="admin-helper">Loading…</p>}
+    {!ready && <PhotoGridSkeleton count={8} />}
     {ready && <>
       {tags.length > 0 && <div className="gallery-filters" aria-label="Filter by tag">
         <button className={activeTag === 'all' ? 'is-active' : ''} onClick={() => setActiveTag('all')}>All ({items.length})</button>

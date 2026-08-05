@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Settings, fetchSettings, saveSettings as persistSettings } from '@/lib/cms';
 import { SettingsForm } from '@/components/admin-editors';
+import { FormSkeleton } from '@/components/skeletons';
 
 const emptySettings: Settings = { siteName: '', email: '', phone: '', address: '', heroImage: '', youtubeUrl: '', instagramUrl: '' };
 
@@ -24,7 +25,7 @@ export default function SettingsPage() {
   return <>
     <div className="admin-top"><div><h1 className="display">Site settings</h1></div></div>
     {notice && <div className="admin-notice">{notice}</div>}
-    {!ready && <p className="admin-helper">Loading…</p>}
+    {!ready && <FormSkeleton count={7} />}
     {ready && <SettingsForm settings={settings} onSubmit={submit} onDirty={() => {}} />}
   </>;
 }

@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { Item, saveItem } from '@/lib/cms';
 import { HubEditor, BlogEditor, GalleryEditor, TestimonialEditor, DocumentEditor, JobEditor } from './admin-editors';
 import type { ContentModule } from './admin-module-list';
+import { FormSkeleton } from './skeletons';
 
 const emptyByModule: Record<ContentModule, () => Item> = {
   'Hubs & auctions': () => ({ id: '', title: '', detail: '', location: '', description: '', auctionDate: '', whatsapp: '', contactNumber: '', mapsUrl: '', image: '' }),
@@ -40,7 +41,7 @@ export function ModuleEditorPage({ module, slug, id, fetchItems }: { module: Con
   function markDirty() { setDirty(true); }
 
   if (notFound) return <p className="admin-helper">Item not found.</p>;
-  if (!item) return <p className="admin-helper">Loading…</p>;
+  if (!item) return <FormSkeleton />;
 
   const props = { item, onCancel: cancel, onSave: save, onDirty: markDirty };
   return <>
