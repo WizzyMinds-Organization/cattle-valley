@@ -48,7 +48,7 @@ export function InvestorGalleryBrowser() {
     updateUrl(category, value);
   }
 
-  if (!ready) return <div className="masonry" aria-hidden="true">{Array.from({ length: 6 }).map((_, i) => <div className="skeleton-tile" key={i} style={{ height: 180 + (i % 3) * 60 }} />)}</div>;
+  if (!ready) return <div className="masonry" aria-hidden="true">{Array.from({ length: 6 }).map((_, i) => <div className="skeleton-tile" key={i} />)}</div>;
 
   if (categories.length === 0) return <p className="gallery-empty">No investor photos have been published yet.</p>;
 
