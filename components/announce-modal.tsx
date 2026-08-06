@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, ImageIcon, X } from 'lucide-react';
+import { Bell, CalendarDays, X } from 'lucide-react';
 import { Item, fetchDocuments, fetchGalleryImages, fetchHubs, formatAuctionDate } from '@/lib/cms';
 
 function hasUpcomingAuction(value?: string) { if (!value) return false; const date = new Date(`${value}T00:00:00`); return !Number.isNaN(date.getTime()) && date.getTime() >= new Date(new Date().toDateString()).getTime(); }
@@ -41,7 +41,10 @@ export function AnnounceModal() {
         <span className="eyebrow">Upcoming auctions</span>
         <ul className="announce-list">{upcoming.map(hub => <li key={hub.id}><CalendarDays size={15} /><span><b>{hub.title}</b>{formatAuctionDate(hub.auctionDate)} · {hub.location}</span></li>)}</ul>
       </div>}
-      {hasNewContent && <Link href="/gallery" className="announce-notification" onClick={() => setOpen(false)}><ImageIcon size={16} /> New photos and documents were just added — see the gallery</Link>}
+      {hasNewContent && <Link href="/investor-gallery" className="announce-notification" onClick={() => setOpen(false)}>
+        <span className="announce-bell"><Bell size={22} /><span className="announce-badge" aria-hidden="true" /></span>
+        New photos and documents were just added — see the investor gallery
+      </Link>}
       <div className="confirm-actions"><button className="button dark" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setOpen(false)}>Got it</button></div>
     </div>
   </div>;

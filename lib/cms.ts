@@ -27,6 +27,7 @@ export type Item = {
   fileName?: string;
   issueDate?: string;
   employmentType?: string;
+  sortOrder?: number;
 };
 
 export type Settings = {
@@ -69,13 +70,15 @@ export function blogItemToPayload(item: Partial<Item>) {
   return { title: item.title, subheading: item.subheading, content: item.content, category: item.category, read_time: item.readTime, image_url: item.image, status: item.status };
 }
 
-type GalleryRow = { id: string; title: string; category: string | null; tags: string[] | null; slug: string | null; image_url: string | null; created_at: string };
+type GalleryRow = { id: string; title: string; category: string | null; tags: string[] | null; slug: string | null; image_url: string | null; created_at: string; sort_order: number | null };
 export function galleryRowToItem(row: GalleryRow): Item {
   const tags = row.tags || [];
-  return { id: row.id, title: row.title, category: row.category || '', tags, slug: row.slug || '', image: row.image_url || '', createdAt: row.created_at, detail: tags.join(', ') || 'General' };
+  return { id: row.id, title: row.title, category: row.category || '', tags, slug: row.slug || '', image: row.image_url || '', createdAt: row.created_at, sortOrder: row.sort_order ?? undefined, detail: tags.join(', ') || 'General' };
 }
 export function galleryItemToPayload(item: Partial<Item>) {
-  return { title: item.title, category: item.category, tags: item.tags || [], slug: item.slug, image_url: item.image };
+  const payload: Record<string, unknown> = { title: item.title, category: item.category, tags: item.tags || [], slug: item.slug, image_url: item.image };
+  if (item.sortOrder !== undefined) payload.sort_order = item.sortOrder;
+  return payload;
 }
 
 type TestimonialRow = { id: string; name: string; role: string | null; quote: string | null; status: string };
@@ -125,9 +128,17 @@ export async function fetchBlogPosts(): Promise<Item[]> {
   return (data as BlogRow[]).map(blogRowToItem);
 }
 export async function fetchGalleryImages(): Promise<Item[]> {
-  const { data, error } = await supabase.from('gallery_images').select('*').order('created_at', { ascending: false });
+  let { data, error } = await supabase.from('gallery_images').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+  if (error) {
+    // sort_order column not migrated yet — fall back to date ordering so the gallery still loads.
+    ({ data, error } = await supabase.from('gallery_images').select('*').order('created_at', { ascending: false }));
+  }
   if (error) throw error;
   return (data as GalleryRow[]).map(galleryRowToItem);
+}
+export async function reorderGalleryImages(ids: string[]): Promise<void> {
+  const res = await fetch('/api/gallery-images/reorder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `Request failed (${res.status})`);
 }
 export async function fetchTestimonials(): Promise<Item[]> {
   const { data, error } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });

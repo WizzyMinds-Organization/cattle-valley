@@ -47,9 +47,11 @@ create table if not exists public.gallery_images (
   tags text[] not null default '{}',
   slug text,
   image_url text,
+  sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+create index if not exists gallery_images_sort_order_idx on public.gallery_images (sort_order);
 
 -- ---------------------------------------------------------------------------
 -- Testimonials
