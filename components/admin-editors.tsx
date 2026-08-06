@@ -1,7 +1,7 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useState } from 'react';
-import { Save, X } from 'lucide-react';
+import { ChangeEvent, DragEvent, FormEvent, useRef, useState } from 'react';
+import { Save, UploadCloud, X } from 'lucide-react';
 import { Item, Status, formatAuctionDate, uploadFile } from '@/lib/cms';
 import { RichTextEditor } from './rich-text-editor';
 import { DatePicker, Select } from './ui-controls';
@@ -133,8 +133,49 @@ export function Field({ label, name, value, placeholder, textarea, hint }: { lab
 }
 
 export function Upload({ label, name, image, onImage, required, disabled, progress }: { label: string; name: string; image: string; onImage: (value: string) => void; required?: boolean; disabled?: boolean; progress?: number | null }) {
-  function change(e: ChangeEvent<HTMLInputElement>) { const file = e.target.files?.[0]; if (file) onImage(URL.createObjectURL(file)); }
-  return <div className="field"><label htmlFor={name}>{label}</label><input id={name} name={name} type="file" accept="image/*" required={required} disabled={disabled} onChange={change} />{progress != null && <ProgressBar percent={progress} />}{image && <img className="editor-preview" src={image} alt="Upload preview" />}</div>;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [fileName, setFileName] = useState('');
+
+  function pick(file: File | undefined) {
+    if (!file) return;
+    setFileName(file.name);
+    onImage(URL.createObjectURL(file));
+  }
+  function change(e: ChangeEvent<HTMLInputElement>) { pick(e.target.files?.[0]); }
+  function onDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault(); setDragOver(false);
+    if (disabled) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !inputRef.current) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    inputRef.current.files = dt.files;
+    pick(file);
+  }
+
+  return <div className="field">
+    <label htmlFor={name}>{label}</label>
+    <div className="upload-row">
+      {image && <img className="editor-preview" src={image} alt="Upload preview" />}
+      <div className="upload-row-drop">
+        <div
+          className={`upload-dropzone upload-dropzone-compact${dragOver ? ' is-drag-over' : ''}${disabled ? ' is-disabled' : ''}`}
+          onDragOver={e => { if (disabled) return; e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          onClick={() => { if (!disabled) inputRef.current?.click(); }}
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+        >
+          <UploadCloud size={22} />
+          <p>{fileName ? <b>{fileName}</b> : <><b>Drag a photo here</b> or <span className={`upload-browse-link${disabled ? ' is-disabled' : ''}`}>browse files</span></>}</p>
+          <input ref={inputRef} id={name} name={name} type="file" accept="image/*" required={required} disabled={disabled} onChange={change} style={{ display: 'none' }} />
+        </div>
+        {progress != null && <ProgressBar percent={progress} />}
+      </div>
+    </div>
+  </div>;
 }
 
 export function ProgressBar({ percent }: { percent: number }) {

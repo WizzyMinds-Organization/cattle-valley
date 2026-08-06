@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
 import { Item, fetchGalleryImages, fetchDocuments } from '@/lib/cms';
+import { Lightbox } from './lightbox';
 
 const PAGE_SIZE = 9;
 
@@ -16,6 +17,7 @@ export function GalleryBrowser({ documentsOnly = false }: { documentsOnly?: bool
   const [active, setActive] = useState('latest');
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([fetchGalleryImages().then(setGallery).catch(() => {}), fetchDocuments().then(setDocs).catch(() => {})]).finally(() => setLoading(false));
@@ -45,9 +47,16 @@ export function GalleryBrowser({ documentsOnly = false }: { documentsOnly?: bool
     {!documentsOnly && <>
       <div className="gallery-filters" aria-label="Gallery categories">{categories.map(category => <button onClick={() => choose(category)} className={active === category ? 'is-active' : ''} key={category}>{category === 'latest' ? 'Latest' : category.replace(/-/g, ' ')}</button>)}</div>
       {loading ? <GallerySkeleton /> : <>
-        <div className="masonry">{visibleImages.map(image => <img key={image.id} src={image.image} alt={image.title} loading="lazy" />)}</div>
+        <div className="masonry">{visibleImages.map((image, i) => <img key={image.id} src={image.image} alt={image.title} loading="lazy" onClick={() => setLightboxIndex(i)} />)}</div>
         {images.length === 0 && <p className="gallery-empty">No images in this category yet.</p>}
         {visibleCount < images.length && <button className="button light gallery-load-more" onClick={() => setVisibleCount(c => c + PAGE_SIZE)}>Load more</button>}
+        {lightboxIndex !== null && <Lightbox
+          src={visibleImages[lightboxIndex].image || ''}
+          alt={visibleImages[lightboxIndex].title}
+          onClose={() => setLightboxIndex(null)}
+          onPrev={lightboxIndex > 0 ? () => setLightboxIndex(i => (i as number) - 1) : undefined}
+          onNext={lightboxIndex < visibleImages.length - 1 ? () => setLightboxIndex(i => (i as number) + 1) : undefined}
+        />}
       </>}
     </>}
     <section className="documents-preview">
