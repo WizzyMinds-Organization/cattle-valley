@@ -48,8 +48,8 @@ const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function toISO(y: number, m: number, d: number) { return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`; }
 
-export function DatePicker({ id, name, value, onChange, placeholder = 'Select date', className }: {
-  id?: string; name?: string; value: string; onChange: (value: string) => void; placeholder?: string; className?: string;
+export function DatePicker({ id, name, value, onChange, placeholder = 'Select date', className, disabled }: {
+  id?: string; name?: string; value: string; onChange: (value: string) => void; placeholder?: string; className?: string; disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -77,7 +77,7 @@ export function DatePicker({ id, name, value, onChange, placeholder = 'Select da
 
   return <div className={`ui-select ui-date${className ? ` ${className}` : ''}`} ref={ref}>
     {name && <input type="hidden" name={name} value={value} />}
-    <button type="button" id={id} className="ui-select-trigger" aria-haspopup="dialog" aria-expanded={open} data-placeholder={!value} onClick={openPicker}>
+    <button type="button" id={id} className="ui-select-trigger" aria-haspopup="dialog" aria-expanded={open} data-placeholder={!value} disabled={disabled} onClick={openPicker}>
       <span>{value ? formatAuctionDate(value) : placeholder}</span>
       <Calendar size={16} />
     </button>

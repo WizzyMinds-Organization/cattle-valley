@@ -21,6 +21,7 @@ export function ModuleListPage({ module, slug, singular, fetchItems, showStatus 
   const [loadError, setLoadError] = useState('');
   const [notice, setNotice] = useState('');
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,8 +30,10 @@ export function ModuleListPage({ module, slug, singular, fetchItems, showStatus 
   }, []);
 
   async function remove(id: string) {
-    try { await deleteItem(module, id); setItems(prev => prev.filter(i => i.id !== id)); setNotice('Item removed.'); }
+    setDeleting(true);
+    try { await deleteItem(module, id); setItems(prev => prev.filter(i => i.id !== id)); setNotice('Item removed.'); setPendingDelete(null); }
     catch (err) { setNotice(err instanceof Error ? err.message : 'Failed to delete.'); }
+    finally { setDeleting(false); }
   }
 
   return (
@@ -42,11 +45,11 @@ export function ModuleListPage({ module, slug, singular, fetchItems, showStatus 
       {ready && <>
         <p className="admin-helper">Changes save straight to the database and go live on the public site immediately.</p>
         <div className="admin-table card">
-          {items.map(item => <div className="admin-row" key={item.id}><div className="admin-row-main">{item.image && <img className="admin-thumb" src={item.image} alt="" />}<div><b>{item.title}</b><span>{item.detail}</span></div></div><div className="row-actions">{showStatus && item.status && <span className={`status ${item.status.toLowerCase()}`}>{item.status}</span>}<Link href={`/admin/${slug}/${item.id}`}>Edit</Link><button className="danger" onClick={() => setPendingDelete(item)} aria-label={`Delete ${item.title}`}><Trash2 size={15} /></button></div></div>)}
+          {items.map(item => <div className="admin-row" key={item.id}><div className="admin-row-main">{item.image && <img className="admin-thumb" src={item.image} alt="" />}<div><b>{item.title}</b><span>{item.detail}</span></div></div><div className="row-actions">{showStatus && item.status && <span className={`status ${item.status.toLowerCase()}`}>{item.status}</span>}<Link href={`/admin/${slug}/${item.id}`}>Edit</Link><button className="danger" onClick={() => setPendingDelete(item)} disabled={deleting} aria-label={`Delete ${item.title}`}><Trash2 size={15} /></button></div></div>)}
           {items.length === 0 && <div className="admin-empty">No entries yet. Add your first one above.</div>}
         </div>
       </>}
-      {pendingDelete && <ConfirmDialog title="Delete this item?" message={`Delete "${pendingDelete.title}"? This can't be undone.`} confirmLabel="Delete" tone="danger" onConfirm={() => { remove(pendingDelete.id); setPendingDelete(null); }} onCancel={() => setPendingDelete(null)} />}
+      {pendingDelete && <ConfirmDialog title="Delete this item?" message={`Delete "${pendingDelete.title}"? This can't be undone.`} confirmLabel="Delete" tone="danger" busy={deleting} onConfirm={() => remove(pendingDelete.id)} onCancel={() => setPendingDelete(null)} />}
     </>
   );
 }

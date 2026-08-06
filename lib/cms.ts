@@ -180,11 +180,22 @@ export async function saveSettings(settings: Settings): Promise<Settings> {
   const res = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
   return parseOrThrow(res);
 }
-export async function uploadFile(file: File): Promise<{ url: string; name: string; size: number }> {
+export function uploadFile(file: File, onProgress?: (percent: number) => void): Promise<{ url: string; name: string; size: number }> {
   const body = new FormData();
   body.append('file', file);
-  const res = await fetch('/api/upload', { method: 'POST', body });
-  return parseOrThrow(res);
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload');
+    if (onProgress) xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+    xhr.onload = () => {
+      let data: unknown;
+      try { data = JSON.parse(xhr.responseText); } catch { data = {}; }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data as { url: string; name: string; size: number });
+      else reject(new Error((data as { error?: string })?.error || `Request failed (${xhr.status})`));
+    };
+    xhr.onerror = () => reject(new Error('Network error while uploading.'));
+    xhr.send(body);
+  });
 }
 
 // --- Investor gallery (separate from the public gallery — see plan) -----

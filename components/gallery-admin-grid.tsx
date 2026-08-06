@@ -13,6 +13,7 @@ export function GalleryAdminGrid() {
   const [loadError, setLoadError] = useState('');
   const [notice, setNotice] = useState('');
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [activeTag, setActiveTag] = useState('all');
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
@@ -23,8 +24,10 @@ export function GalleryAdminGrid() {
   }, []);
 
   async function remove(id: string) {
-    try { await deleteItem('Gallery', id); setItems(prev => prev.filter(i => i.id !== id)); setNotice('Image removed.'); }
+    setDeleting(true);
+    try { await deleteItem('Gallery', id); setItems(prev => prev.filter(i => i.id !== id)); setNotice('Image removed.'); setPendingDelete(null); }
     catch (err) { setNotice(err instanceof Error ? err.message : 'Failed to delete.'); }
+    finally { setDeleting(false); }
   }
 
   const tags = Array.from(new Set(items.flatMap(item => item.tags?.length ? item.tags : [item.slug || 'general'])));
@@ -48,12 +51,12 @@ export function GalleryAdminGrid() {
             <div className="admin-photo-info"><b>{item.title}</b><span>{item.detail}</span></div>
             <div className="admin-photo-actions">
               <Link href={`/admin/gallery/${item.id}`} aria-label={`Edit ${item.title}`}><Pencil size={15} /></Link>
-              <button onClick={() => setPendingDelete(item)} aria-label={`Delete ${item.title}`}><Trash2 size={15} /></button>
+              <button onClick={() => setPendingDelete(item)} disabled={deleting} aria-label={`Delete ${item.title}`}><Trash2 size={15} /></button>
             </div>
           </div>
         </div>)}
       </div>
     </>}
-    {pendingDelete && <ConfirmDialog title="Delete this image?" message={`Delete "${pendingDelete.title}"? This can't be undone.`} confirmLabel="Delete" tone="danger" onConfirm={() => { remove(pendingDelete.id); setPendingDelete(null); }} onCancel={() => setPendingDelete(null)} />}
+    {pendingDelete && <ConfirmDialog title="Delete this image?" message={`Delete "${pendingDelete.title}"? This can't be undone.`} confirmLabel="Delete" tone="danger" busy={deleting} onConfirm={() => remove(pendingDelete.id)} onCancel={() => setPendingDelete(null)} />}
   </>;
 }

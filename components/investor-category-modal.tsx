@@ -8,6 +8,7 @@ function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a
 
 export function InvestorCategoryModal({ categories, onClose, onChange }: { categories: InvestorCategory[]; onClose: () => void; onChange: (categories: InvestorCategory[]) => void }) {
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
 
   async function rename(category: InvestorCategory, name: string) {
@@ -25,12 +26,13 @@ export function InvestorCategoryModal({ categories, onClose, onChange }: { categ
     const form = e.currentTarget;
     const name = String(new FormData(form).get('name') || '').trim();
     if (!name) return;
-    setError('');
+    setAdding(true); setError('');
     try {
       const saved = await saveInvestorCategory({ name, slug: slugify(name) }, true);
       onChange([...categories, saved]);
       form.reset();
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to add category.'); }
+    finally { setAdding(false); }
   }
 
   return <div className="confirm-overlay" onClick={onClose}>
@@ -43,8 +45,8 @@ export function InvestorCategoryModal({ categories, onClose, onChange }: { categ
         {categories.length === 0 && <p className="admin-helper">No categories yet — add the first one below.</p>}
       </div>
       <form onSubmit={addCategory} className="category-add-form">
-        <input name="name" placeholder="New category name" required />
-        <button className="button dark" type="submit">Add</button>
+        <input name="name" placeholder="New category name" required disabled={adding} />
+        <button className="button dark" type="submit" disabled={adding} aria-busy={adding}>{adding ? 'Adding…' : 'Add'}</button>
       </form>
     </div>
   </div>;

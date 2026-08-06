@@ -20,6 +20,7 @@ export function InvestorGalleryAdmin() {
   const [progress, setProgress] = useState('');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<InvestorImage | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploadCategory, setUploadCategory] = useState('');
   const [uploadDate, setUploadDate] = useState('');
@@ -51,9 +52,9 @@ export function InvestorGalleryAdmin() {
     try {
       const saved: InvestorImage[] = [];
       for (let i = 0; i < files.length; i++) {
-        setProgress(`Uploading ${i + 1} of ${files.length}…`);
         const file = files[i];
-        const uploaded = await uploadFile(file);
+        setProgress(`Uploading ${i + 1} of ${files.length} — 0%`);
+        const uploaded = await uploadFile(file, percent => setProgress(`Uploading ${i + 1} of ${files.length} — ${percent}%`));
         const item = await saveInvestorImage({ title: file.name, category: uploadCategory, takenOn: uploadDate, image: uploaded.url }, true);
         saved.push(item);
       }
@@ -67,8 +68,10 @@ export function InvestorGalleryAdmin() {
   }
 
   async function remove(id: string) {
-    try { await deleteInvestorImage(id); setImages(prev => prev.filter(i => i.id !== id)); setNotice('Photo removed.'); }
+    setDeleting(true);
+    try { await deleteInvestorImage(id); setImages(prev => prev.filter(i => i.id !== id)); setNotice('Photo removed.'); setPendingDelete(null); }
     catch (err) { setNotice(err instanceof Error ? err.message : 'Failed to delete.'); }
+    finally { setDeleting(false); }
   }
 
   const groups = useMemo(() => {
@@ -95,29 +98,29 @@ export function InvestorGalleryAdmin() {
         <div className="upload-layout">
           <div className="field upload-field-category">
             <label htmlFor="category">Category</label>
-            <Select id="category" name="category" placeholder="Select a category…" value={uploadCategory} onChange={setUploadCategory} options={categories.map(c => ({ value: c.slug, label: c.name }))} />
+            <Select id="category" name="category" placeholder="Select a category…" value={uploadCategory} onChange={setUploadCategory} options={categories.map(c => ({ value: c.slug, label: c.name }))} disabled={uploading} />
             {categories.length === 0 && <small>No categories yet — use &quot;Manage categories&quot; above to add one first.</small>}
           </div>
-          <div className="field upload-field-date"><label htmlFor="takenOn">Date these photos were taken / provided</label><DatePicker id="takenOn" name="takenOn" value={uploadDate} onChange={setUploadDate} /></div>
+          <div className="field upload-field-date"><label htmlFor="takenOn">Date these photos were taken / provided</label><DatePicker id="takenOn" name="takenOn" value={uploadDate} onChange={setUploadDate} disabled={uploading} /></div>
 
           <div
             className={`upload-dropzone ${dragOver ? 'is-drag-over' : ''}`}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={e => { if (uploading) return; e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={onDrop}
+            onDrop={e => { if (uploading) { e.preventDefault(); return; } onDrop(e); }}
           >
             <UploadCloud size={26} />
-            <p><b>Drag photos here</b> or <label htmlFor="files" className="upload-browse-link">browse files</label></p>
-            <input id="files" type="file" accept="image/*" multiple onChange={pickFiles} style={{ display: 'none' }} />
+            <p><b>Drag photos here</b> or <label htmlFor="files" className={`upload-browse-link${uploading ? ' is-disabled' : ''}`}>browse files</label></p>
+            <input id="files" type="file" accept="image/*" multiple onChange={pickFiles} disabled={uploading} style={{ display: 'none' }} />
           </div>
 
-          <div className="field upload-submit-field"><button className="button dark" disabled={uploading}><UploadCloud size={16} />{uploading ? (progress || 'Uploading…') : `Upload ${files.length || ''} batch`}</button></div>
+          <div className="field upload-submit-field"><button className="button dark" disabled={uploading} aria-busy={uploading}>{uploading ? <span className="spinner" aria-hidden="true" /> : <UploadCloud size={16} />}{uploading ? (progress || 'Uploading…') : `Upload ${files.length || ''} batch`}</button></div>
         </div>
 
         {files.length > 0 && <div className="upload-preview-grid">
           {files.map((file, i) => <div className="upload-preview-item" key={`${file.name}-${i}`}>
             <img src={URL.createObjectURL(file)} alt="" />
-            <button type="button" onClick={() => removeFile(i)} aria-label={`Remove ${file.name}`}><X size={13} /></button>
+            <button type="button" onClick={() => removeFile(i)} disabled={uploading} aria-label={`Remove ${file.name}`}><X size={13} /></button>
           </div>)}
         </div>}
         {files.length > 0 && <small>{files.length} photo{files.length === 1 ? '' : 's'} ready to upload.</small>}
@@ -143,7 +146,7 @@ export function InvestorGalleryAdmin() {
                 <div className="investor-photo-grid">
                   {dateImages.map(image => <div className="investor-photo-card" key={image.id}>
                     <img src={image.image} alt={image.title} loading="lazy" />
-                    <button className="investor-photo-delete" onClick={() => setPendingDelete(image)} aria-label="Delete photo"><Trash2 size={14} /></button>
+                    <button className="investor-photo-delete" onClick={() => setPendingDelete(image)} disabled={deleting} aria-label="Delete photo"><Trash2 size={14} /></button>
                   </div>)}
                 </div>
               </div>)}
@@ -159,6 +162,6 @@ export function InvestorGalleryAdmin() {
       </div>
     </>}
     {showCategoryModal && <InvestorCategoryModal categories={categories} onClose={() => setShowCategoryModal(false)} onChange={setCategories} />}
-    {pendingDelete && <ConfirmDialog title="Delete this photo?" message="This can't be undone." confirmLabel="Delete" tone="danger" onConfirm={() => { remove(pendingDelete.id); setPendingDelete(null); }} onCancel={() => setPendingDelete(null)} />}
+    {pendingDelete && <ConfirmDialog title="Delete this photo?" message="This can't be undone." confirmLabel="Delete" tone="danger" busy={deleting} onConfirm={() => remove(pendingDelete.id)} onCancel={() => setPendingDelete(null)} />}
   </>;
 }
