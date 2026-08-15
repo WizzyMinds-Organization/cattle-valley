@@ -42,7 +42,7 @@ export function InvestorCategoryModal({ categories, onClose, onChange }: { categ
       {error && <p className="form-error">{error}</p>}
       <div className="category-list">
         {categories.map(category => <input key={category.id} defaultValue={category.name} disabled={busyId === category.id} onBlur={e => rename(category, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} />)}
-        {categories.length === 0 && <p className="admin-helper">No categories yet — add the first one below.</p>}
+        {categories.length === 0 && <p className="admin-helper">No categories yet. Add the first one below.</p>}
       </div>
       <form onSubmit={addCategory} className="category-add-form">
         <input name="name" placeholder="New category name" required disabled={adding} />

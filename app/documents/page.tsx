@@ -1,2 +1,2 @@
 import { Footer, PageHero } from '@/components/site-chrome'; import { GalleryBrowser } from '@/components/gallery-browser';
-export default function Documents(){return <><PageHero eyebrow="Document library" title="Resources for better decisions." copy="Policies, standards, and practical documents from Graze Valley."/><main className="content"><div className="shell"><GalleryBrowser documentsOnly/></div></main><Footer/></>}
+export default function Documents(){return <><PageHero eyebrow="Document library" title="Resources for better decisions." copy="Policies, standards, and practical documents from Cattle Valley."/><main className="content"><div className="shell"><GalleryBrowser documentsOnly/></div></main><Footer/></>}

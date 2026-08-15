@@ -35,7 +35,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="admin"><div className="admin-shell">
       <aside className={`admin-sidebar ${sidebarOpen ? 'is-open' : ''}`}>
-        <div className="admin-brand"><span className="eyebrow">Graze Valley</span><b className="display">Content<br/>Studio</b></div>
+        <div className="admin-brand"><span className="eyebrow">Cattle Valley</span><b className="display">Content<br/>Studio</b></div>
         <nav aria-label="Admin navigation">{nav.map(({ label, href, icon: Icon }) => <Link className={`admin-nav-item ${isActive(href) ? 'is-active' : ''}`} href={href} key={label} onClick={() => setSidebarOpen(false)}><Icon size={16} />{label}</Link>)}</nav>
         <div className="admin-sidebar-foot">{userEmail && <p className="admin-user">{userEmail}</p>}<button className="admin-reset" onClick={signOut} disabled={signingOut}><LogOut size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />{signingOut ? 'Signing out…' : 'Sign out'}</button></div>
       </aside>

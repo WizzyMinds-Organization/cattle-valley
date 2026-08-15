@@ -1,6 +1,6 @@
-# Graze Valley
+# Cattle Valley
 
-Premium, responsive website for Graze Valley, built with Next.js App Router, TypeScript, Framer Motion, React Hook Form, Prisma, and PostgreSQL.
+Premium, responsive website for Cattle Valley, built with Next.js App Router, TypeScript, Framer Motion, React Hook Form, Prisma, and PostgreSQL.
 
 ## Start locally
 

@@ -24,7 +24,7 @@ export function CareersBrowser() {
         <div><h3>{job.title}</h3><p className="hub-meta">{job.category}</p></div>
         <div className="careers-meta">{job.location && <span><MapPin size={14} /> {job.location}</span>}{job.employmentType && <span><Briefcase size={14} /> {job.employmentType}</span>}</div>
       </Link>)}
-      {visible.length === 0 && <p className="gallery-empty">No open roles right now — check back soon.</p>}
+      {visible.length === 0 && <p className="gallery-empty">No open roles right now. Check back soon.</p>}
     </div>
   </>;
 }

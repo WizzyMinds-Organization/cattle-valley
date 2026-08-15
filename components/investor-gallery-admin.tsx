@@ -53,8 +53,8 @@ export function InvestorGalleryAdmin() {
       const saved: InvestorImage[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        setProgress(`Uploading ${i + 1} of ${files.length} — 0%`);
-        const uploaded = await uploadFile(file, percent => setProgress(`Uploading ${i + 1} of ${files.length} — ${percent}%`));
+        setProgress(`Uploading ${i + 1} of ${files.length}: 0%`);
+        const uploaded = await uploadFile(file, percent => setProgress(`Uploading ${i + 1} of ${files.length}: ${percent}%`));
         const item = await saveInvestorImage({ title: file.name, category: uploadCategory, takenOn: uploadDate, image: uploaded.url }, true);
         saved.push(item);
       }
@@ -93,13 +93,13 @@ export function InvestorGalleryAdmin() {
     {notice && <div className="admin-notice">{notice}<button onClick={() => setNotice('')} aria-label="Close"><X size={14} /></button></div>}
     {!ready && <InvestorGroupsSkeleton />}
     {ready && <>
-      <p className="admin-helper">Bulk-upload a batch of photos for one category and one date — this is what the team shares with investors as a filtered link.</p>
+      <p className="admin-helper">Bulk-upload a batch of photos for one category and one date. This is what the team shares with investors as a filtered link.</p>
       <form className="card editor editor-wide" onSubmit={submitBatch}>
         <div className="upload-layout">
           <div className="field upload-field-category">
             <label htmlFor="category">Category</label>
             <Select id="category" name="category" placeholder="Select a category…" value={uploadCategory} onChange={setUploadCategory} options={categories.map(c => ({ value: c.slug, label: c.name }))} disabled={uploading} />
-            {categories.length === 0 && <small>No categories yet — use &quot;Manage categories&quot; above to add one first.</small>}
+            {categories.length === 0 && <small>No categories yet. Use &quot;Manage categories&quot; above to add one first.</small>}
           </div>
           <div className="field upload-field-date"><label htmlFor="takenOn">Date these photos were taken / provided</label><DatePicker id="takenOn" name="takenOn" value={uploadDate} onChange={setUploadDate} disabled={uploading} /></div>
 
@@ -158,7 +158,7 @@ export function InvestorGalleryAdmin() {
             </>}
           </div>;
         })}
-        {groups.length === 0 && <div className="admin-empty">No categories yet — use &quot;Manage categories&quot; to add one first.</div>}
+        {groups.length === 0 && <div className="admin-empty">No categories yet. Use &quot;Manage categories&quot; to add one first.</div>}
       </div>
     </>}
     {showCategoryModal && <InvestorCategoryModal categories={categories} onClose={() => setShowCategoryModal(false)} onChange={setCategories} />}

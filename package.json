@@ -1,9 +1,9 @@
 {
-  "name": "graze-valley",
+  "name": "cattle-valley",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3011",
+    "dev": "next dev -p 3011 -H 0.0.0.0",
     "build": "next build",
     "start": "next start -p 3011",
     "lint": "next lint",

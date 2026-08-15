@@ -4,5 +4,5 @@ import './globals.css';
 import { AnnounceModalGate } from '@/components/announce-modal-gate';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta' });
-export const metadata: Metadata = { title: { default: 'Graze Valley | Healthy Living Habitat', template: '%s | Graze Valley' }, description: 'A science-led livestock enterprise building a healthier, sustainable future.', metadataBase: new URL('https://grazevalley.com'), openGraph: { type: 'website', siteName: 'Graze Valley' }, twitter: { card: 'summary_large_image' } };
+export const metadata: Metadata = { title: { default: 'Cattle Valley | Healthy Living Habitat', template: '%s | Cattle Valley' }, description: 'A science-led livestock enterprise building a healthier, sustainable future.', metadataBase: new URL('https://cattlevalley.com'), openGraph: { type: 'website', siteName: 'Cattle Valley' }, twitter: { card: 'summary_large_image' } };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body className={`${inter.variable} ${jakarta.variable}`}>{children}<AnnounceModalGate /></body></html>; }
