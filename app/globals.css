@@ -17,3 +17,5 @@
 .video-play-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;background:var(--gold);color:#173b27;display:grid;place-items:center;transition:transform .25s,background .25s;box-shadow:0 12px 34px rgba(0,0,0,.38)}
 .video-play:hover .video-play-btn,.video-play:focus-visible .video-play-btn{transform:translate(-50%,-50%) scale(1.09);background:#e8c968}
 @media(max-width:640px){.video-play-btn{width:64px;height:64px}}
+
+.field-optional{color:var(--muted);font-weight:600;font-size:.72rem}
