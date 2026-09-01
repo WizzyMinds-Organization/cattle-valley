@@ -1,6 +1,7 @@
 import 'server-only';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { timedFetch } from '@/lib/timed-fetch';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -12,6 +13,7 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
   return createServerClient(url, anonKey, {
+    global: { fetch: timedFetch(8000) },
     cookies: {
       getAll() {
         return cookieStore.getAll();

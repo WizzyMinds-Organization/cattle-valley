@@ -25,7 +25,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [userEmail, setUserEmail] = useState('');
   const [signingOut, setSigningOut] = useState(false);
 
-  useEffect(() => { supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || '')); }, []);
+  // Local read (no network) — middleware already verified the session
+  // before this component could render.
+  useEffect(() => { supabase.auth.getSession().then(({ data }) => setUserEmail(data.session?.user?.email || '')); }, []);
   useEffect(() => { document.body.style.overflow = sidebarOpen ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [sidebarOpen]);
 
   async function signOut() { setSigningOut(true); await supabase.auth.signOut(); router.push('/login'); router.refresh(); }
@@ -36,7 +38,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="admin"><div className="admin-shell">
       <aside className={`admin-sidebar ${sidebarOpen ? 'is-open' : ''}`}>
         <div className="admin-brand"><span className="eyebrow">Cattle Valley</span><b className="display">Content<br/>Studio</b></div>
-        <nav aria-label="Admin navigation">{nav.map(({ label, href, icon: Icon }) => <Link className={`admin-nav-item ${isActive(href) ? 'is-active' : ''}`} href={href} key={label} onClick={() => setSidebarOpen(false)}><Icon size={16} />{label}</Link>)}</nav>
+        <nav aria-label="Admin navigation">{nav.map(({ label, href, icon: Icon }) => <Link prefetch={false} className={`admin-nav-item ${isActive(href) ? 'is-active' : ''}`} href={href} key={label} onClick={() => setSidebarOpen(false)}><Icon size={16} />{label}</Link>)}</nav>
         <div className="admin-sidebar-foot">{userEmail && <p className="admin-user">{userEmail}</p>}<button className="admin-reset" onClick={signOut} disabled={signingOut}><LogOut size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />{signingOut ? 'Signing out…' : 'Sign out'}</button></div>
       </aside>
       {sidebarOpen && <button className="admin-overlay" aria-label="Close menu" onClick={() => setSidebarOpen(false)} />}
