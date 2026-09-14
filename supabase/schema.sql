@@ -130,6 +130,7 @@ create table if not exists public.site_settings (
   hero_image_url text,
   youtube_url text,
   instagram_url text,
+  facebook_url text,
   updated_at timestamptz not null default now()
 );
 insert into public.site_settings (id) values (1) on conflict (id) do nothing;

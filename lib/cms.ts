@@ -38,6 +38,7 @@ export type Settings = {
   heroImage?: string;
   youtubeUrl?: string;
   instagramUrl?: string;
+  facebookUrl?: string;
 };
 
 export function formatAuctionDate(iso?: string): string {
@@ -107,12 +108,12 @@ export function jobItemToPayload(item: Partial<Item>) {
   return { title: item.title, department: item.category, location: item.location, employment_type: item.employmentType, description: item.content, status: item.status };
 }
 
-type SettingsRow = { site_name: string; email: string | null; phone: string | null; address: string | null; hero_image_url: string | null; youtube_url: string | null; instagram_url: string | null };
+type SettingsRow = { site_name: string; email: string | null; phone: string | null; address: string | null; hero_image_url: string | null; youtube_url: string | null; instagram_url: string | null; facebook_url: string | null };
 export function settingsRowToItem(row: SettingsRow): Settings {
-  return { siteName: row.site_name, email: row.email || '', phone: row.phone || '', address: row.address || '', heroImage: row.hero_image_url || '', youtubeUrl: row.youtube_url || '', instagramUrl: row.instagram_url || '' };
+  return { siteName: row.site_name, email: row.email || '', phone: row.phone || '', address: row.address || '', heroImage: row.hero_image_url || '', youtubeUrl: row.youtube_url || '', instagramUrl: row.instagram_url || '', facebookUrl: row.facebook_url || '' };
 }
 export function settingsItemToPayload(settings: Settings) {
-  return { site_name: settings.siteName, email: settings.email, phone: settings.phone, address: settings.address, hero_image_url: settings.heroImage, youtube_url: settings.youtubeUrl, instagram_url: settings.instagramUrl };
+  return { site_name: settings.siteName, email: settings.email, phone: settings.phone, address: settings.address, hero_image_url: settings.heroImage, youtube_url: settings.youtubeUrl, instagram_url: settings.instagramUrl, facebook_url: settings.facebookUrl };
 }
 
 // --- Reads (public, via the anon key — RLS allows SELECT to everyone) ---
