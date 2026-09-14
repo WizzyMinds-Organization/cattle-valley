@@ -119,23 +119,6 @@ create table if not exists public.job_openings (
 );
 
 -- ---------------------------------------------------------------------------
--- Site settings (single row)
--- ---------------------------------------------------------------------------
-create table if not exists public.site_settings (
-  id smallint primary key default 1 check (id = 1),
-  site_name text not null default 'Graze Valley',
-  email text,
-  phone text,
-  address text,
-  hero_image_url text,
-  youtube_url text,
-  instagram_url text,
-  facebook_url text,
-  updated_at timestamptz not null default now()
-);
-insert into public.site_settings (id) values (1) on conflict (id) do nothing;
-
--- ---------------------------------------------------------------------------
 -- updated_at auto-touch trigger
 -- ---------------------------------------------------------------------------
 create or replace function public.set_updated_at()
@@ -166,10 +149,6 @@ drop trigger if exists set_updated_at on public.documents;
 create trigger set_updated_at before update on public.documents
   for each row execute function public.set_updated_at();
 
-drop trigger if exists set_updated_at on public.site_settings;
-create trigger set_updated_at before update on public.site_settings
-  for each row execute function public.set_updated_at();
-
 drop trigger if exists set_updated_at on public.investor_gallery_images;
 create trigger set_updated_at before update on public.investor_gallery_images
   for each row execute function public.set_updated_at();
@@ -191,7 +170,6 @@ alter table public.blog_posts enable row level security;
 alter table public.gallery_images enable row level security;
 alter table public.testimonials enable row level security;
 alter table public.documents enable row level security;
-alter table public.site_settings enable row level security;
 alter table public.investor_gallery_categories enable row level security;
 alter table public.investor_gallery_images enable row level security;
 alter table public.job_openings enable row level security;
@@ -210,9 +188,6 @@ create policy "Public read testimonials" on public.testimonials for select using
 
 drop policy if exists "Public read documents" on public.documents;
 create policy "Public read documents" on public.documents for select using (true);
-
-drop policy if exists "Public read site_settings" on public.site_settings;
-create policy "Public read site_settings" on public.site_settings for select using (true);
 
 drop policy if exists "Public read investor_gallery_categories" on public.investor_gallery_categories;
 create policy "Public read investor_gallery_categories" on public.investor_gallery_categories for select using (true);

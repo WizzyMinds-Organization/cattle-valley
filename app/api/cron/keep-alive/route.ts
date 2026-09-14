@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   }
 
   const startedAt = Date.now();
-  const { error } = await supabaseAdmin.from('site_settings').select('id').limit(1);
+  const { error } = await supabaseAdmin.from('hubs').select('id').limit(1);
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 502 });
   }

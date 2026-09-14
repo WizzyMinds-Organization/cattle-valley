@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Briefcase, FileText, FolderOpen, ImageIcon, LayoutDashboard, LogOut, MapPin, Menu, MessageSquareQuote, Settings as SettingsIcon, TrendingUp } from 'lucide-react';
+import { Briefcase, FileText, FolderOpen, ImageIcon, LayoutDashboard, LogOut, MapPin, Menu, MessageSquareQuote, TrendingUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
 const nav = [
@@ -15,7 +15,6 @@ const nav = [
   { label: 'Testimonials', href: '/admin/testimonials', icon: MessageSquareQuote },
   { label: 'Documents', href: '/admin/documents', icon: FolderOpen },
   { label: 'Careers', href: '/admin/careers', icon: Briefcase },
-  { label: 'Site settings', href: '/admin/settings', icon: SettingsIcon },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

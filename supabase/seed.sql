@@ -28,11 +28,3 @@ where not exists (select 1 from public.gallery_images where title = 'Healthy her
 insert into public.testimonials (name, role, quote, status)
 select 'Dr. Nisha Rahman', 'Veterinary Consultant', 'The approach is refreshingly structured. You can see the care in the animals and the systems behind them.', 'Published'
 where not exists (select 1 from public.testimonials where name = 'Dr. Nisha Rahman');
-
-update public.site_settings
-set site_name = 'Graze Valley',
-    email = 'info@grazevalley.com',
-    phone = '+91 98765 43210',
-    address = 'Malappuram, Kerala, India',
-    hero_image_url = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=2200&q=90'
-where id = 1;
