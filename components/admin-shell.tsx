@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Briefcase, FileText, FolderOpen, ImageIcon, LayoutDashboard, LogOut, MapPin, Menu, MessageSquareQuote, TrendingUp } from 'lucide-react';
+import { Briefcase, FileText, FolderOpen, ImageIcon, LayoutDashboard, LogOut, Mail, MapPin, Menu, MessageSquareQuote, TrendingUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
 const nav = [
@@ -13,6 +13,7 @@ const nav = [
   { label: 'Gallery', href: '/admin/gallery', icon: ImageIcon },
   { label: 'Investor gallery', href: '/admin/investor-gallery', icon: TrendingUp },
   { label: 'Testimonials', href: '/admin/testimonials', icon: MessageSquareQuote },
+  { label: 'Messages', href: '/admin/messages', icon: Mail },
   { label: 'Documents', href: '/admin/documents', icon: FolderOpen },
   { label: 'Careers', href: '/admin/careers', icon: Briefcase },
 ];
