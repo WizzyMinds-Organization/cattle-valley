@@ -2,9 +2,17 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, MapPin } from 'lucide-react';
+import { Briefcase, Mail, MapPin } from 'lucide-react';
 import { Footer, Header } from '@/components/site-chrome';
 import { Item, fetchJobs } from '@/lib/cms';
+
+const APPLY_EMAIL = 'info.cattlevalley@gmail.com';
+
+function applyMailto(jobTitle: string) {
+  const subject = `Application: ${jobTitle}`;
+  const body = `Hi Cattle Valley team,\n\nI would like to apply for the ${jobTitle} role.\n\nName:\nPhone:\nEmail:\nNote:\n\n(Please attach your resume before sending.)`;
+  return `mailto:${APPLY_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export default function JobDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -31,6 +39,12 @@ export default function JobDetail({ params }: { params: Promise<{ id: string }> 
     <article className="content">
       <div className="shell">
         {job?.content && <div className="article-body" dangerouslySetInnerHTML={{ __html: job.content }} />}
+        {job && <div className="card apply-card">
+          <h3>Apply for this role</h3>
+          <p>Click below to open your email app with the subject filled in. Attach your resume, fill in your details, and send.</p>
+          <a className="button dark" href={applyMailto(job.title)}><Mail size={16} /> Apply via email</a>
+          <p className="apply-email">Button not working? Email your CV directly to <a href={`mailto:${APPLY_EMAIL}`}>{APPLY_EMAIL}</a></p>
+        </div>}
         <Link href="/careers" className="button light" style={{ marginTop: 32 }}>← Back to careers</Link>
       </div>
     </article>
