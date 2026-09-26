@@ -6,7 +6,7 @@ import { Briefcase, Mail, MapPin } from 'lucide-react';
 import { Footer, Header } from '@/components/site-chrome';
 import { Item, fetchJobs } from '@/lib/cms';
 
-const APPLY_EMAIL = 'info.cattlevalley@gmail.com';
+const APPLY_EMAIL = 'info@cattlevalley.in';
 
 function applyMailto(jobTitle: string) {
   const subject = `Application: ${jobTitle}`;
