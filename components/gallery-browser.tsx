@@ -6,14 +6,17 @@ import { Item, fetchGalleryImages, fetchDocuments } from '@/lib/cms';
 import { Lightbox } from './lightbox';
 
 function GallerySkeleton() {
-  return <div className="masonry" aria-hidden="true">{Array.from({ length: 9 }).map((_, i) => <div className="skeleton-tile" key={i} />)}</div>;
+  return <div className="masonry" aria-hidden="true">{Array.from({ length: PAGE_SIZE }).map((_, i) => <div className="skeleton-tile" key={i} />)}</div>;
 }
+
+const PAGE_SIZE = 9;
 
 export function GalleryBrowser({ documentsOnly = false }: { documentsOnly?: boolean }) {
   const [gallery, setGallery] = useState<Item[]>([]);
   const [docs, setDocs] = useState<Item[]>([]);
   const [active, setActive] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -22,11 +25,14 @@ export function GalleryBrowser({ documentsOnly = false }: { documentsOnly?: bool
     if (shared) setActive(shared);
   }, []);
 
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [active]);
+
   const categories = useMemo(() => ['all', ...Array.from(new Set(gallery.flatMap(item => item.tags?.length ? item.tags : [item.slug || 'general'])))], [gallery]);
   const images = gallery.filter(item => {
     if (active === 'all') return true;
     return (item.tags?.length ? item.tags : [item.slug || 'general']).includes(active);
   });
+  const visibleImages = images.slice(0, visibleCount);
   const allDocs = [...docs].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   const visibleDocs = documentsOnly ? allDocs : allDocs.slice(0, 10);
 
@@ -41,14 +47,15 @@ export function GalleryBrowser({ documentsOnly = false }: { documentsOnly?: bool
     {!documentsOnly && <>
       <div className="gallery-filters" aria-label="Gallery categories">{categories.map(category => <button onClick={() => choose(category)} className={active === category ? 'is-active' : ''} key={category}>{category === 'all' ? 'All' : category.replace(/-/g, ' ')}</button>)}</div>
       {loading ? <GallerySkeleton /> : <>
-        <div className="masonry">{images.map((image, i) => <img key={image.id} src={image.image} alt={image.title} loading="lazy" onClick={() => setLightboxIndex(i)} />)}</div>
+        <div className="masonry">{visibleImages.map((image, i) => <img key={image.id} src={image.image} alt={image.title} loading="lazy" onClick={() => setLightboxIndex(i)} />)}</div>
         {images.length === 0 && <p className="gallery-empty">No images in this category yet.</p>}
+        {visibleCount < images.length && <button className="button light gallery-load-more" onClick={() => setVisibleCount(c => c + PAGE_SIZE)}>Load more</button>}
         {lightboxIndex !== null && <Lightbox
-          src={images[lightboxIndex].image || ''}
-          alt={images[lightboxIndex].title}
+          src={visibleImages[lightboxIndex].image || ''}
+          alt={visibleImages[lightboxIndex].title}
           onClose={() => setLightboxIndex(null)}
           onPrev={lightboxIndex > 0 ? () => setLightboxIndex(i => (i as number) - 1) : undefined}
-          onNext={lightboxIndex < images.length - 1 ? () => setLightboxIndex(i => (i as number) + 1) : undefined}
+          onNext={lightboxIndex < visibleImages.length - 1 ? () => setLightboxIndex(i => (i as number) + 1) : undefined}
         />}
       </>}
     </>}
