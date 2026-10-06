@@ -5,11 +5,11 @@ import { FileText } from 'lucide-react';
 import { Item, fetchGalleryImages, fetchDocuments } from '@/lib/cms';
 import { Lightbox } from './lightbox';
 
+const PAGE_SIZE = 9;
+
 function GallerySkeleton() {
   return <div className="masonry" aria-hidden="true">{Array.from({ length: PAGE_SIZE }).map((_, i) => <div className="skeleton-tile" key={i} />)}</div>;
 }
-
-const PAGE_SIZE = 9;
 
 export function GalleryBrowser({ documentsOnly = false }: { documentsOnly?: boolean }) {
   const [gallery, setGallery] = useState<Item[]>([]);
